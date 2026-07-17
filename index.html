@@ -3,71 +3,46 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
-<title>Get a Grip — 3D Wall</title>
+<title>Get a Grip — Prow Wall</title>
 <style>
   :root{
-    --bg:#0d0f12; --panel:#15181d; --panel2:#1c2027; --line:#2a2f38;
-    --ink:#f2f4f7; --muted:#8b93a1; --accent:#ffd21e; --accent2:#4ade80;
+    --bg:#0b0d10; --panel:#15181d; --panel2:#1c2027; --line:#2a2f38;
+    --ink:#f2f4f7; --muted:#8b93a1; --accent:#ffd21e;
     --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   }
   *{box-sizing:border-box}
   html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:var(--font);overflow:hidden}
-  #app{position:fixed;inset:0}
-  canvas{display:block}
-
-  /* ---------- Sidebar ---------- */
-  #ui{
-    position:absolute;top:0;left:0;height:100%;width:320px;
-    background:linear-gradient(180deg,rgba(21,24,29,.96),rgba(13,15,18,.96));
-    border-right:1px solid var(--line);display:flex;flex-direction:column;
-    backdrop-filter:blur(8px);z-index:10;
-  }
-  .brand{padding:20px 20px 16px;border-bottom:1px solid var(--line)}
+  #app{position:fixed;inset:0} canvas{display:block}
+  #ui{position:absolute;top:0;left:0;height:100%;width:322px;
+    background:linear-gradient(180deg,rgba(21,24,29,.96),rgba(11,13,16,.96));
+    border-right:1px solid var(--line);display:flex;flex-direction:column;backdrop-filter:blur(8px);z-index:10}
+  .brand{padding:20px 20px 15px;border-bottom:1px solid var(--line)}
   .brand h1{margin:0;font-size:19px;letter-spacing:.02em;font-weight:800;display:flex;align-items:center;gap:9px}
   .brand h1 .dot{width:11px;height:11px;border-radius:3px;background:var(--accent);box-shadow:0 0 12px var(--accent)}
-  .brand p{margin:5px 0 0;font-size:12px;color:var(--muted);letter-spacing:.02em}
-
-  .levels{display:flex;gap:6px;padding:14px 16px 4px}
-  .levels button{
-    flex:1;padding:8px 0;font-size:12px;font-weight:600;color:var(--muted);
-    background:var(--panel2);border:1px solid var(--line);border-radius:8px;cursor:pointer;transition:.15s;
-  }
-  .levels button:hover{color:var(--ink)}
-  .levels button.on{color:#0d0f12;background:var(--accent);border-color:var(--accent)}
-
-  .list{flex:1;overflow-y:auto;padding:8px 12px 20px}
-  .list::-webkit-scrollbar{width:8px}
-  .list::-webkit-scrollbar-thumb{background:#2a2f38;border-radius:4px}
-  .route{
-    display:flex;align-items:center;gap:12px;padding:11px 12px;margin:6px 0;border-radius:10px;
-    background:var(--panel2);border:1px solid var(--line);cursor:pointer;transition:.15s;
-  }
+  .brand p{margin:5px 0 0;font-size:12px;color:var(--muted)}
+  .sect{padding:12px 18px 2px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  .list{flex:1;overflow-y:auto;padding:2px 12px 20px}
+  .list::-webkit-scrollbar{width:8px}.list::-webkit-scrollbar-thumb{background:#2a2f38;border-radius:4px}
+  .route{display:flex;align-items:center;gap:12px;padding:11px 12px;margin:6px 0;border-radius:10px;
+    background:var(--panel2);border:1px solid var(--line);cursor:pointer;transition:.15s}
   .route:hover{border-color:#3a414c;transform:translateX(2px)}
   .route.active{border-color:var(--accent);background:#20242c;box-shadow:0 0 0 1px var(--accent) inset}
   .route .swatch{width:16px;height:16px;border-radius:5px;flex:0 0 auto;box-shadow:0 0 0 2px rgba(255,255,255,.08)}
   .route .meta{flex:1;min-width:0}
   .route .meta .nm{font-size:14px;font-weight:600;line-height:1.2}
   .route .meta .sub{font-size:11.5px;color:var(--muted);margin-top:2px}
-  .route .grade{font-size:12px;font-weight:800;padding:3px 8px;border-radius:6px;background:#0d0f12;color:var(--accent)}
-
+  .route .grade{font-size:12px;font-weight:800;padding:3px 8px;border-radius:6px;background:#0b0d10;color:var(--accent)}
   .hint{padding:12px 20px;border-top:1px solid var(--line);font-size:11.5px;color:var(--muted);line-height:1.5}
-
-  /* ---------- Top-right controls ---------- */
   #topbar{position:absolute;top:14px;right:14px;display:flex;gap:8px;z-index:10}
-  #topbar button{
-    padding:9px 14px;font-size:12.5px;font-weight:600;color:var(--ink);
+  #topbar button{padding:9px 14px;font-size:12.5px;font-weight:600;color:var(--ink);
     background:rgba(28,32,39,.9);border:1px solid var(--line);border-radius:9px;cursor:pointer;transition:.15s;
-    display:flex;align-items:center;gap:7px;backdrop-filter:blur(6px);
-  }
+    display:flex;align-items:center;gap:7px;backdrop-filter:blur(6px)}
   #topbar button:hover{border-color:#3a414c;background:rgba(38,43,52,.9)}
+  #topbar button.on{border-color:var(--accent);color:var(--accent)}
   #topbar button svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.7}
-
-  /* ---------- Route detail card ---------- */
-  #detail{
-    position:absolute;bottom:16px;right:16px;width:280px;padding:16px 18px;z-index:10;
-    background:rgba(21,24,29,.96);border:1px solid var(--line);border-radius:14px;
-    backdrop-filter:blur(8px);transform:translateY(140%);transition:transform .28s cubic-bezier(.2,.8,.2,1);
-  }
+  #detail{position:absolute;bottom:16px;right:16px;width:288px;padding:16px 18px;z-index:10;
+    background:rgba(21,24,29,.96);border:1px solid var(--line);border-radius:14px;backdrop-filter:blur(8px);
+    transform:translateY(150%);transition:transform .28s cubic-bezier(.2,.8,.2,1)}
   #detail.show{transform:translateY(0)}
   #detail .dh{display:flex;align-items:center;gap:10px}
   #detail .dh .swatch{width:18px;height:18px;border-radius:6px}
@@ -77,34 +52,26 @@
   #detail .drow div .k{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
   #detail .drow div .v{font-size:15px;font-weight:600;margin-top:2px}
   #detail .setter{font-size:12px;color:var(--muted);margin-top:12px;line-height:1.5}
-
   #loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
-    background:var(--bg);z-index:50;color:var(--muted);font-size:14px;letter-spacing:.03em}
-  @media(max-width:720px){#ui{width:100%;height:auto;max-height:44%;bottom:0;top:auto;border-right:none;border-top:1px solid var(--line)}
-    #detail{display:none}}
+    background:var(--bg);z-index:50;color:var(--muted);font-size:14px}
+  @media(max-width:720px){#ui{width:100%;height:auto;max-height:44%;bottom:0;top:auto;border-right:none;border-top:1px solid var(--line)}#detail{display:none}}
 </style>
 </head>
 <body>
 <div id="app"></div>
-<div id="loading">Loading wall…</div>
+<div id="loading">Building prow…</div>
 
 <div id="ui">
-  <div class="brand">
-    <h1><span class="dot"></span>GET A GRIP</h1>
-    <p>Boulder wall · route explorer</p>
-  </div>
-  <div class="levels" id="levels"></div>
+  <div class="brand"><h1><span class="dot"></span>GET A GRIP</h1><p>Prow wall · routes by colour</p></div>
+  <div class="sect">Routes</div>
   <div class="list" id="list"></div>
-  <div class="hint">Drag to orbit · scroll to zoom · click a route to isolate it, or tap a hold on the wall.</div>
+  <div class="hint">Each colour is a route. Drag to orbit · scroll to zoom · click a route or tap a hold to isolate it.</div>
 </div>
 
 <div id="topbar">
-  <button id="btnReset" title="Reset view">
-    <svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v4h4"/></svg>Reset view
-  </button>
-  <button id="btnAll" title="Show all routes">
-    <svg viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>Show all
-  </button>
+  <button id="btnReset"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v4h4"/></svg>Reset</button>
+  <button id="btnAll"><svg viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>Show all</button>
+  <button id="btnLabels"><svg viewBox="0 0 24 24"><path d="M4 4h10l6 8-6 8H4z"/><circle cx="8" cy="12" r="1.3"/></svg>Tags</button>
 </div>
 
 <div id="detail">
@@ -127,389 +94,273 @@
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+const R=THREE, PI=Math.PI, rad=d=>d*PI/180, rnd=(a,b)=>a+Math.random()*(b-a);
 
 /* =========================================================================
-   GET A GRIP — reconstruction of the bouldering corner from the photos.
-   Coordinates in metres. Origin at floor centre of the corner.
-   Wall built from faceted panels; holds parented to their panel so they
-   sit flush on the surface. Routes group holds; levels filter routes.
+   GET A GRIP — 1:1 reconstruction of the PROW wall (photo #2).
+   Two panels meeting at a vertical arête + a dark right return.
+   Holds are placed from a measured trace of the photo (fx,fy fractions).
+   A "route" = one hold colour. Camera is head-on to match the photo.
    ========================================================================= */
-
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x0d0f12);
-scene.fog = new THREE.Fog(0x0d0f12, 14, 34);
-
-const renderer = new THREE.WebGLRenderer({ antialias:true });
-renderer.setPixelRatio(Math.min(devicePixelRatio,2));
-renderer.setSize(innerWidth, innerHeight);
-renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+const scene=new R.Scene(); scene.background=new R.Color(0x0b0d10);
+scene.fog=new R.Fog(0x0b0d10,18,44);
+const renderer=new R.WebGLRenderer({antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2)); renderer.setSize(innerWidth,innerHeight);
+renderer.shadowMap.enabled=true; renderer.shadowMap.type=R.PCFSoftShadowMap;
+renderer.toneMapping=R.ACESFilmicToneMapping; renderer.toneMappingExposure=1.15;
 document.getElementById('app').appendChild(renderer.domElement);
 
-const camera = new THREE.PerspectiveCamera(50, innerWidth/innerHeight, 0.1, 200);
-const HOME = { pos:new THREE.Vector3(0.4, 2.6, 12.5), tgt:new THREE.Vector3(0, 2.4, 0) };
+const camera=new R.PerspectiveCamera(46,innerWidth/innerHeight,0.1,200);
+const HOME={pos:new R.Vector3(0.15,2.7,9.6),tgt:new R.Vector3(0.2,2.55,0)};
 camera.position.copy(HOME.pos);
+const controls=new OrbitControls(camera,renderer.domElement);
+controls.enableDamping=true; controls.dampingFactor=.08; controls.target.copy(HOME.tgt);
+controls.minDistance=4.5; controls.maxDistance=20;
+controls.maxPolarAngle=PI*0.55; controls.minPolarAngle=PI*0.16;
+controls.minAzimuthAngle=-0.8; controls.maxAzimuthAngle=0.8;
 
-const controls = new OrbitControls(camera, renderer.domElement);
-controls.enableDamping = true; controls.dampingFactor = .08;
-controls.target.copy(HOME.tgt);
-controls.minDistance = 4; controls.maxDistance = 22;
-controls.maxPolarAngle = Math.PI*0.53;
+/* lighting — warm left key (photo has a hot left light) + magenta rim + fill */
+scene.add(new R.HemisphereLight(0x37455a,0x0a0b0d,.5));
+const key=new R.SpotLight(0xfff0cf,150,36,PI/4,.55,1.3);
+key.position.set(-5,8.5,9); key.target.position.set(-1.5,2.5,0);
+key.castShadow=true; key.shadow.mapSize.set(2048,2048); key.shadow.bias=-0.0003; scene.add(key,key.target);
+const fillW=new R.SpotLight(0xffe6c0,70,36,PI/4.5,.6,1.4);
+fillW.position.set(4,8,9); fillW.target.position.set(2,2.5,0); scene.add(fillW,fillW.target);
+const rim=new R.SpotLight(0xff2ea6,34,42,PI/3.5,.7,1.5); rim.position.set(6,8.2,-4); scene.add(rim);
+const sky=new R.DirectionalLight(0x6f86c8,.4); sky.position.set(6,5,8); scene.add(sky); // blue sky top-right
+scene.add(new R.DirectionalLight(0x8fa8c8,.2).translateZ(10));
 
-/* ---------- lighting: dim gym with warm spots (matches photos) ---------- */
-scene.add(new THREE.HemisphereLight(0x3a4658, 0x0a0b0d, .55));
-const key = new THREE.SpotLight(0xfff2d0, 90, 30, Math.PI/5, .5, 1.4);
-key.position.set(-4, 8, 8); key.castShadow = true;
-key.shadow.mapSize.set(1024,1024); key.shadow.bias = -0.0004;
-scene.add(key);
-const rim = new THREE.SpotLight(0xff3fae, 26, 30, Math.PI/4, .6, 1.6); // magenta rim like photo 5
-rim.position.set(7, 7, -3); scene.add(rim);
-const fill = new THREE.DirectionalLight(0x9fb4d0, .35); fill.position.set(6,5,7); scene.add(fill);
+/* ---------- textures ---------- */
+function wallTexture(){
+  const c=document.createElement('canvas'); c.width=c.height=1024; const x=c.getContext('2d');
+  x.fillStyle='#111318'; x.fillRect(0,0,1024,1024);
+  for(let i=0;i<44;i++){x.globalAlpha=rnd(.02,.05);x.strokeStyle='#1c2027';x.lineWidth=rnd(1,3);
+    x.beginPath();let y=rnd(0,1024);x.moveTo(0,y);for(let px=0;px<1024;px+=40)x.lineTo(px,y+rnd(-8,8));x.stroke();}
+  for(let i=0;i<460;i++){const r=rnd(6,48);x.globalAlpha=rnd(.015,.06);x.fillStyle='#dfe3e9';
+    x.beginPath();x.arc(rnd(0,1024),rnd(0,780),r,0,7);x.fill();}
+  x.globalAlpha=1;x.fillStyle='#04050a';
+  for(let gy=44;gy<1024;gy+=64)for(let gx=40;gx<1024;gx+=64){x.beginPath();x.arc(gx+((gy/64|0)%2)*32,gy,4,0,7);x.fill();}
+  const t=new R.CanvasTexture(c);t.colorSpace=R.SRGBColorSpace;t.wrapS=t.wrapT=R.RepeatWrapping;t.anisotropy=8;return t;
+}
+const wallTex=wallTexture();
+function wallMat(rep,tint=0x181b20){const t=wallTex.clone();t.needsUpdate=true;t.repeat.set(...rep);
+  return new R.MeshStandardMaterial({map:t,color:tint,roughness:.94,metalness:.03});}
 
-/* ---------- floor mat ---------- */
-const floor = new THREE.Mesh(
-  new THREE.CircleGeometry(11, 48),
-  new THREE.MeshStandardMaterial({ color:0x6b6459, roughness:.95 })
-);
-floor.rotation.x = -Math.PI/2; floor.receiveShadow = true; scene.add(floor);
+/* ---------- wall panels (the prow) ----------
+   Left/main panel bright, right panel angles back, far-right dark return.
+   The vertical arête runs near worldX≈+0.4 where the two main panels fold. */
+function panel(mesh){mesh.receiveShadow=true;mesh.castShadow=true;scene.add(mesh);return mesh;}
+const pMain=panel(new R.Mesh(new R.PlaneGeometry(6.6,4.95), wallMat([3.2,2.4],0x1a1d23)));
+pMain.position.set(-1.0,2.45,0); pMain.rotation.y=rad(6);
+const pRight=panel(new R.Mesh(new R.PlaneGeometry(2.7,4.95), wallMat([1.4,2.4],0x141519)));
+pRight.position.set(2.35,2.42,-0.25); pRight.rotation.y=rad(-34);
+const pFar=panel(new R.Mesh(new R.PlaneGeometry(2.0,4.95), wallMat([1.1,2.4],0x0e0f13)));
+pFar.position.set(3.75,2.4,0.9); pFar.rotation.y=rad(-64);
+// subtle prow ridge down the fold
+const ridge=panel(new R.Mesh(new R.BoxGeometry(0.12,4.95,0.5), wallMat([.3,2.4],0x15171c)));
+ridge.position.set(0.55,2.45,0.28); ridge.rotation.y=rad(-14);
+
+/* roof + beams + mat */
+(function surroundings(){
+  const rc=document.createElement('canvas');rc.width=256;rc.height=64;const rx=rc.getContext('2d');
+  for(let i=0;i<256;i+=16){const g=rx.createLinearGradient(i,0,i+16,0);
+    g.addColorStop(0,'#20242b');g.addColorStop(.5,'#3a4048');g.addColorStop(1,'#20242b');rx.fillStyle=g;rx.fillRect(i,0,16,64);}
+  const rt=new R.CanvasTexture(rc);rt.colorSpace=R.SRGBColorSpace;rt.wrapS=rt.wrapT=R.RepeatWrapping;rt.repeat.set(10,3);
+  const roof=new R.Mesh(new R.PlaneGeometry(16,9),new R.MeshStandardMaterial({map:rt,color:0x2a2f36,roughness:.6,metalness:.5}));
+  roof.rotation.x=PI/2; roof.position.set(0,5.1,0.3); scene.add(roof);
+  const beamMat=new R.MeshStandardMaterial({color:0x6b4f33,roughness:.9});
+  for(let i=-2;i<=2;i++){const b=new R.Mesh(new R.BoxGeometry(16,.18,.34),beamMat);b.position.set(0,5.02,i*1.8+0.3);b.castShadow=true;scene.add(b);}
+  const matMat=new R.MeshStandardMaterial({color:0x5a5348,roughness:.98});
+  const m=new R.Mesh(new R.CircleGeometry(9,56),matMat);m.rotation.x=-PI/2;m.position.y=0.02;m.receiveShadow=true;scene.add(m);
+})();
 
 /* =========================================================================
-   PANELS — the faceted black corner. Each panel is a plane with a transform;
-   holds get parented to it. Wall texture = speckled chalk on matte black.
+   HOLD FACTORY — place at world (x,y,z), oriented facing the camera (+z).
    ========================================================================= */
-function chalkTexture(){
-  const c = document.createElement('canvas'); c.width=c.height=512;
-  const x = c.getContext('2d');
-  x.fillStyle = '#14161a'; x.fillRect(0,0,512,512);
-  // chalk smudges
-  for(let i=0;i<260;i++){
-    const r = Math.random()*40+6;
-    const g = x.createRadialGradient(Math.random()*512,Math.random()*512*0.7,0,0,0,r);
-    x.globalAlpha = Math.random()*0.05+0.01;
-    x.fillStyle = '#d7dae0';
-    x.beginPath(); x.arc(Math.random()*512,Math.random()*380,r,0,7); x.fill();
-  }
-  x.globalAlpha=1;
-  // T-nut dots grid
-  x.fillStyle = '#05060a';
-  for(let gy=40; gy<512; gy+=52) for(let gx=34; gx<512; gx+=52){
-    x.beginPath(); x.arc(gx+((gy/52)%2)*26, gy, 3, 0, 7); x.fill();
-  }
-  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
-  t.wrapS=t.wrapT=THREE.RepeatWrapping; return t;
-}
-const wallTex = chalkTexture();
-function wallMat(rep=[2,2]){
-  const t = wallTex.clone(); t.needsUpdate=true; t.repeat.set(...rep);
-  return new THREE.MeshStandardMaterial({ map:t, color:0x1a1d22, roughness:.92, metalness:.02 });
-}
+const COL={yellow:0xf2c40c,green:0x51c144,blue:0x3a72b6,grey:0x968d7f,pink:0xcf6a8a,purple:0x7a4ea0,tan:0xbcae8f};
+const geoCache={};
+function jitter(g,a){const p=g.attributes.position;for(let i=0;i<p.count;i++)p.setXYZ(i,p.getX(i)*(1+rnd(-a,a)),p.getY(i)*(1+rnd(-a,a)),p.getZ(i)*(1+rnd(-a,a)));g.computeVertexNormals();return g;}
+function holdGeo(k){ if(geoCache[k])return geoCache[k]; let g;
+  switch(k){
+    case 'jug':    g=jitter(new R.SphereGeometry(1,18,14),.12);g.scale(1,.62,.55);break;
+    case 'sloper': g=jitter(new R.SphereGeometry(1,20,16,0,PI*2,0,PI/2),.08);g.scale(1,.5,1);break;
+    case 'crimp':  g=jitter(new R.SphereGeometry(1,16,10),.06);g.scale(1,.28,.42);break;
+    case 'pinch':  g=jitter(new R.SphereGeometry(1,14,12),.14);g.scale(.6,.72,.5);break;
+    case 'foot':   g=jitter(new R.IcosahedronGeometry(1,0),.12);g.scale(.72,.62,.5);break;
+    default:       g=new R.SphereGeometry(1,12,10);
+  } geoCache[k]=g; return g; }
 
-const panels = {};
-function panel(name, {pos, rot, w, h, rep}){
-  const g = new THREE.Group();
-  g.position.set(...pos); g.rotation.set(...rot);
-  const m = new THREE.Mesh(new THREE.PlaneGeometry(w,h,1,1), wallMat(rep||[w/2,h/2]));
-  m.receiveShadow = true; m.castShadow = true;
-  g.add(m); scene.add(g); panels[name] = g; g.userData.dims={w,h};
-  return g;
-}
+const WX=fx=>-3.9+fx*7.8, WY=fy=>4.7-fy*4.55;   // photo-fraction → world
+const allHolds=[], byId={}; let HID=0; const tagSprites=[];
+function tagTex(n){const c=document.createElement('canvas');c.width=c.height=64;const x=c.getContext('2d');
+  x.fillStyle='#f4d20e';x.fillRect(6,6,52,52);x.fillStyle='#111';x.font='bold 40px sans-serif';
+  x.textAlign='center';x.textBaseline='middle';x.fillText(n,32,36);
+  const t=new R.CanvasTexture(c);t.colorSpace=R.SRGBColorSpace;return t;}
 
-const D = 22/180*Math.PI;
-// Left return wall — angles in from the left, faces right/out
-panel('left',  { pos:[-4.9, 2.3, 1.4], rot:[0,  0.62, 0], w:3.6, h:4.6 });
-// Central-left main face (slight overhang)
-panel('midL',  { pos:[-1.9, 2.35, 0.2], rot:[-0.12, 0.16, 0], w:3.2, h:4.7 });
-// Central prow / arête — protrudes toward viewer
-panel('prowL', { pos:[-0.35, 2.4, 0.95], rot:[-0.10,  0.42, 0], w:1.7, h:4.7 });
-panel('prowR', { pos:[ 0.95, 2.4, 0.95], rot:[-0.10, -0.42, 0], w:1.7, h:4.7 });
-// Right main face (steep, big yellow volumes + green cluster)
-panel('right', { pos:[ 3.6, 2.35, 0.1], rot:[-0.14, -0.30, 0], w:4.6, h:4.8 });
-// Right return wall
-panel('farR',  { pos:[ 6.4, 2.3, 1.7], rot:[0, -0.66, 0], w:3.2, h:4.6 });
+function mkHold(mesh,color,tag,x,y){
+  mesh.castShadow=true; mesh.receiveShadow=true; scene.add(mesh);
+  mesh.userData={id:++HID,baseColor:COL[color],colorName:color,mat:mesh.material,tag};
+  allHolds.push(mesh); byId[mesh.userData.id]=mesh;
+  if(tag){const sp=new R.Sprite(new R.SpriteMaterial({map:tagTex(tag),depthTest:false}));
+    sp.scale.set(.17,.17,.17);sp.position.set(x+.22,y-.22,.9);sp.visible=false;scene.add(sp);tagSprites.push(sp);}
+  return mesh.userData.id;
+}
+// small/medium bolt-on hold
+function hold({fx,fy,z=0.04,s=.16,k='jug',c='grey',rot=0,tag=null}){
+  const x=WX(fx),y=WY(fy);
+  const m=new R.Mesh(holdGeo(k),new R.MeshStandardMaterial({color:COL[c],roughness:.62,metalness:.02,emissive:new R.Color(COL[c]),emissiveIntensity:0}));
+  m.scale.setScalar(s); m.position.set(x,y,z); m.rotation.set(rnd(-.2,.2),0,rot); return mkHold(m,c,tag,x,y);
+}
+// quarter-pie volume (the yellow "blocks"): flat beveled quarter-disc
+function pie({fx,fy,z=0.05,radius=.5,rot=0,c='yellow',tag=null}){
+  const x=WX(fx),y=WY(fy);
+  const g=new R.CylinderGeometry(radius*0.72,radius, radius*0.5, 26,1,false,0,PI/2);
+  g.rotateX(PI/2);                          // disc faces +z
+  const m=new R.Mesh(g,new R.MeshStandardMaterial({color:COL[c],roughness:.42,metalness:.02,emissive:new R.Color(COL[c]),emissiveIntensity:0}));
+  m.position.set(x,y,z); m.rotation.z=rot;  // spin the wedge
+  return mkHold(m,c,tag,x,y);
+}
+// split half-dome = two quarter pies sharing a seam (the signature yellow feature)
+function splitDome({fx,fy,radius=.55,rot=0,c='yellow',tag=null}){
+  const ids=[]; const x=WX(fx),y=WY(fy);
+  ids.push(pie({fx,fy,radius,rot,c,tag}));
+  ids.push(pie({fx,fy,radius,rot:rot+PI/2+0.05,c}));   // second wedge, tiny gap
+  return ids;
+}
 
 /* =========================================================================
-   HOLD + VOLUME FACTORY
+   PLACED HOLDS — traced from photo #2 (fx: 0 left→1 right, fy: 0 top→1 bottom)
    ========================================================================= */
-const COL = {
-  yellow:0xf4c20d, green:0x54c14a, blue:0x3f7fbf, grey:0x9a9285,
-  pink:0xd06b8c, purple:0x7b4fa0, tan:0xb7ab90
+// ---- YELLOW volumes (the split quarter-pie half-domes + singles) ----
+pie      ({fx:.09,fy:.13,radius:.62,rot:rad(200),tag:'3'});           // top-left single
+splitDome({fx:.37,fy:.24,radius:.5, rot:rad(20), tag:'3'});           // centre-top split
+pie      ({fx:.55,fy:.21,radius:.42,rot:rad(250),tag:'3'});           // upper-mid single
+pie      ({fx:.74,fy:.11,radius:.5, rot:rad(300)});                   // top-right single (cut)
+splitDome({fx:.70,fy:.53,radius:.55,rot:rad(-40),tag:'4'});           // right-centre split
+splitDome({fx:.33,fy:.70,radius:.55,rot:rad(15), tag:'3'});           // lower-centre split
+pie      ({fx:.015,fy:.55,radius:.5,rot:rad(120)});                   // left-edge (cut)
+pie      ({fx:.82,fy:.86,radius:.52,rot:rad(90)});                    // bottom-right (cut)
+hold     ({fx:.775,fy:.40,s:.12,k:'foot',c:'yellow'});               // tiny yellow foot
+hold     ({fx:.735,fy:.60,s:.11,k:'crimp',c:'yellow'});              // tiny yellow near "4"
+
+// ---- GREEN route (upper-left cluster + lower-centre + scattered) ----
+hold({fx:.17,fy:.20,s:.17,k:'foot',c:'green',rot:.4,tag:'3'});
+hold({fx:.13,fy:.28,s:.16,k:'sloper',c:'green'});
+hold({fx:.145,fy:.35,s:.15,k:'jug',c:'green'});
+hold({fx:.10,fy:.52,s:.18,k:'sloper',c:'green'});
+hold({fx:.055,fy:.63,s:.13,k:'foot',c:'green'});
+hold({fx:.08,fy:.72,s:.13,k:'foot',c:'green'});
+hold({fx:.28,fy:.70,s:.15,k:'sloper',c:'green'});
+hold({fx:.30,fy:.79,s:.12,k:'foot',c:'green'});
+hold({fx:.325,fy:.85,s:.12,k:'foot',c:'green'});
+hold({fx:.60,fy:.72,s:.16,k:'sloper',c:'green'});
+hold({fx:.63,fy:.81,s:.12,k:'foot',c:'green'});
+
+// ---- BLUE route (top brain-holds + centre + right diagonal) ----
+hold({fx:.225,fy:.13,s:.14,k:'sloper',c:'blue'});
+hold({fx:.245,fy:.30,s:.15,k:'jug',c:'blue'});
+hold({fx:.40,fy:.42,s:.15,k:'sloper',c:'blue'});
+hold({fx:.385,fy:.50,s:.14,k:'pinch',c:'blue'});
+hold({fx:.425,fy:.57,s:.14,k:'jug',c:'blue'});
+hold({fx:.63,fy:.44,s:.15,k:'sloper',c:'blue'});
+hold({fx:.66,fy:.54,s:.15,k:'jug',c:'blue'});
+hold({fx:.685,fy:.63,s:.14,k:'sloper',c:'blue'});
+hold({fx:.705,fy:.71,s:.13,k:'pinch',c:'blue'});
+hold({fx:.60,fy:.66,s:.13,k:'crimp',c:'blue'});
+
+// ---- TAN / GREY neutral holds (open feet, wooden pinches) ----
+hold({fx:.20,fy:.30,s:.15,k:'sloper',c:'grey'});
+hold({fx:.47,fy:.28,s:.14,k:'jug',c:'tan'});
+hold({fx:.50,fy:.35,s:.13,k:'pinch',c:'tan'});
+hold({fx:.475,fy:.41,s:.13,k:'crimp',c:'tan'});
+hold({fx:.525,fy:.30,s:.13,k:'sloper',c:'grey'});
+hold({fx:.60,fy:.40,s:.14,k:'sloper',c:'grey'});
+hold({fx:.72,fy:.28,s:.14,k:'jug',c:'grey'});
+hold({fx:.755,fy:.33,s:.13,k:'sloper',c:'grey'});
+hold({fx:.43,fy:.62,s:.13,k:'pinch',c:'tan'});
+hold({fx:.55,fy:.48,s:.13,k:'crimp',c:'tan'});
+
+// ---- PURPLE (low left accents) ----
+hold({fx:.03,fy:.82,s:.13,k:'pinch',c:'purple'});
+hold({fx:.055,fy:.90,s:.12,k:'foot',c:'purple'});
+
+/* =========================================================================
+   ROUTES = colour groups.  Grade/level from the number tags on the wall.
+   ========================================================================= */
+const ROUTE_META={
+  yellow:{name:'Yellow Volumes',grade:'V4',level:2,style:'Overhang · volumes',desc:'The big split quarter-pie volumes across the prow. Tags read 3–4. Compression and big spans between the yellow blocks.'},
+  green :{name:'Green',         grade:'V3',level:2,style:'Face · slopers',   desc:'The green cluster up the left flank into the lower-centre. Tag reads 3.'},
+  blue  :{name:'Blue',          grade:'V2',level:1,style:'Vertical · jugs',  desc:'Blue holds from the brain slopers up top down the centre and out the right diagonal.'},
+  grey  :{name:'Grey',          grade:'V2',level:1,style:'Open · pinches',   desc:'Grey slopers scattered through the middle of the panel — open feet on everything else.'},
+  tan   :{name:'Wood / Tan',    grade:'V1',level:1,style:'Warm-up · jugs',   desc:'The wooden/tan holds — an easy warm-up line up the centre of the prow.'},
+  purple:{name:'Purple',        grade:'V0',level:1,style:'Intro · low',      desc:'Low purple holds on the far left. Kids / intro moves.'},
 };
-const holdGeoCache = {};
-function holdGeo(kind){
-  if(holdGeoCache[kind]) return holdGeoCache[kind];
-  let g;
-  switch(kind){
-    case 'jug':    g = new THREE.SphereGeometry(1, 16, 12); g.scale(1,.62,.5); break;
-    case 'crimp':  g = new THREE.BoxGeometry(1,.42,.34); break;
-    case 'sloper': g = new THREE.SphereGeometry(1, 18, 14, 0, Math.PI*2, 0, Math.PI/2); g.scale(1,.55,1); break;
-    case 'pinch':  g = new THREE.CylinderGeometry(.42,.62,1,10); g.rotateZ(Math.PI/2); g.scale(1,.5,.6); break;
-    case 'foot':   g = new THREE.TetrahedronGeometry(1); g.scale(.7,.55,.5); break;
-    default:       g = new THREE.SphereGeometry(1,12,10);
-  }
-  g.computeVertexNormals(); holdGeoCache[kind]=g; return g;
-}
-// Big feature volumes (yellow) — parametric quarter/half domes + prisms
-function volGeo(kind){
-  switch(kind){
-    case 'quarterDome': { const g=new THREE.SphereGeometry(1,24,18,0,Math.PI/2,0,Math.PI/2); return g; }
-    case 'halfDome':    { const g=new THREE.SphereGeometry(1,26,18,0,Math.PI,0,Math.PI/2); return g; }
-    case 'dome':        { const g=new THREE.SphereGeometry(1,26,18,0,Math.PI*2,0,Math.PI/2.1); return g; }
-    case 'prism':       { const g=new THREE.ConeGeometry(1,1.4,3); return g; }
-    case 'wedge':       { const g=new THREE.CylinderGeometry(0,1,1.3,4); g.rotateY(Math.PI/4); return g; }
-  }
-}
-
-const allHolds = [];
-let HID = 0;
-function addHold(panelName, {u, v, s=0.16, kind='jug', color='grey', rot=0, tilt=0, vol=null}){
-  const p = panels[panelName];
-  const geo = vol ? volGeo(vol) : holdGeo(kind);
-  const mat = new THREE.MeshStandardMaterial({
-    color: COL[color], roughness: vol?0.5:0.65, metalness:0.02,
-    emissive: new THREE.Color(COL[color]), emissiveIntensity:0
-  });
-  const m = new THREE.Mesh(geo, mat);
-  const size = vol ? s : s;
-  m.scale.setScalar(size);
-  if(vol){ m.scale.set(size,size,size); }
-  // local placement on panel face (+z is outward)
-  m.position.set(u, v, vol? size*0.35 : s*0.42);
-  m.rotation.z = rot; m.rotation.x = -Math.PI/2*0 + tilt;
-  if(vol){ m.rotation.x = -Math.PI/2 + tilt; m.rotation.y = rot; } // domes open toward wall
-  m.castShadow = true; m.receiveShadow = true;
-  p.add(m);
-  m.userData = { id:++HID, baseColor:COL[color], colorName:color, routes:[], mat };
-  allHolds.push(m);
-  return m;
-}
-const byId = {};
-function tag(h){ byId[h.userData.id]=h; return h.userData.id; }
+const ORDER=['yellow','green','blue','grey','tan','purple'];
+const ROUTES=ORDER.filter(c=>allHolds.some(h=>h.userData.colorName===c)).map(c=>{
+  const holds=allHolds.filter(h=>h.userData.colorName===c).map(h=>h.userData.id);
+  return {id:c,color:COL[c],holds,...ROUTE_META[c]};
+});
+const byRoute=Object.fromEntries(ROUTES.map(r=>[r.id,r]));
 
 /* =========================================================================
-   PLACE HOLDS  (u = horizontal on panel, v = vertical; metres from centre)
-   Reconstructed from the five photos. Yellow = big volumes, then clusters.
+   INTERACTION
    ========================================================================= */
-// ---- LEFT return wall: yellow quarter volumes stacked + pink/tan holds (photo 1 left) ----
-const L = {};
-L.volTop  = tag(addHold('left',{u:-0.2,v:1.5,s:0.55,vol:'quarterDome',color:'yellow',rot:2.3}));
-L.volMid  = tag(addHold('left',{u:-0.4,v:0.2,s:0.6, vol:'halfDome',   color:'yellow',rot:0.4}));
-L.volBot  = tag(addHold('left',{u:-0.5,v:-1.4,s:0.62,vol:'quarterDome',color:'yellow',rot:-0.6}));
-L.p1 = tag(addHold('left',{u:-1.3,v:1.2,s:.14,kind:'crimp',color:'pink',rot:.3}));
-L.p2 = tag(addHold('left',{u:-1.25,v:0.4,s:.15,kind:'jug',color:'tan'}));
-L.p3 = tag(addHold('left',{u:-1.35,v:-0.4,s:.16,kind:'sloper',color:'pink'}));
-L.p4 = tag(addHold('left',{u:-0.9,v:-1.6,s:.13,kind:'foot',color:'yellow'}));
-L.g1 = tag(addHold('left',{u:1.0,v:1.7,s:.14,kind:'sloper',color:'grey'}));
-
-// ---- MID-LEFT face: grey triangular volumes + blue holds + numbered starts (photo 1 centre) ----
-const M = {};
-M.t1 = tag(addHold('midL',{u:-0.2,v:1.9,s:.5,vol:'prism',color:'grey',rot:.6,tilt:.3}));
-M.t2 = tag(addHold('midL',{u:-0.5,v:0.6,s:.42,vol:'prism',color:'grey',rot:-.4,tilt:.2}));
-M.t3 = tag(addHold('midL',{u:-0.3,v:-0.7,s:.45,vol:'prism',color:'grey',rot:.2,tilt:.25}));
-M.b1 = tag(addHold('midL',{u:0.6,v:2.0,s:.14,kind:'sloper',color:'blue'}));
-M.b2 = tag(addHold('midL',{u:0.7,v:1.2,s:.15,kind:'jug',color:'blue'}));
-M.b3 = tag(addHold('midL',{u:0.8,v:0.2,s:.14,kind:'pinch',color:'blue'}));
-M.b4 = tag(addHold('midL',{u:0.5,v:-1.2,s:.16,kind:'sloper',color:'blue'}));
-M.g2 = tag(addHold('midL',{u:-1.0,v:1.3,s:.13,kind:'crimp',color:'grey'}));
-
-// ---- PROW: yellow half-spheres split across the arête + blue/tan up the spine (photo 2) ----
-const P = {};
-P.yL1 = tag(addHold('prowL',{u:0.4,v:1.2,s:.5, vol:'halfDome',color:'yellow',rot:1.6}));
-P.yL2 = tag(addHold('prowL',{u:0.2,v:-0.6,s:.55,vol:'halfDome',color:'yellow',rot:1.4}));
-P.yR1 = tag(addHold('prowR',{u:-0.4,v:1.3,s:.5, vol:'halfDome',color:'yellow',rot:-1.6}));
-P.yR2 = tag(addHold('prowR',{u:-0.2,v:-0.5,s:.55,vol:'halfDome',color:'yellow',rot:-1.4}));
-P.b1 = tag(addHold('prowL',{u:-0.2,v:0.4,s:.14,kind:'sloper',color:'blue'}));
-P.b2 = tag(addHold('prowR',{u:0.25,v:0.7,s:.14,kind:'pinch',color:'blue'}));
-P.t1 = tag(addHold('prowL',{u:-0.3,v:1.8,s:.14,kind:'jug',color:'tan'}));
-P.t2 = tag(addHold('prowR',{u:0.3,v:1.9,s:.13,kind:'crimp',color:'tan'}));
-P.y0 = tag(addHold('prowL',{u:-0.5,v:2.05,s:.42,vol:'quarterDome',color:'yellow',rot:2.2}));
-
-// ---- RIGHT face: big yellow quarter volumes + dense green cluster + blue (photo 1 right / photo 4) ----
-const R = {};
-R.vTop = tag(addHold('right',{u:0.9,v:2.0,s:.6, vol:'quarterDome',color:'yellow',rot:-1.2}));
-R.vMid = tag(addHold('right',{u:1.6,v:0.1,s:.72,vol:'halfDome',   color:'yellow',rot:-0.6}));
-R.vBig = tag(addHold('right',{u:2.0,v:-1.4,s:.62,vol:'dome',      color:'yellow'}));
-R.g1 = tag(addHold('right',{u:0.2,v:1.5,s:.15,kind:'sloper',color:'green'}));
-R.g2 = tag(addHold('right',{u:0.4,v:0.8,s:.14,kind:'jug',color:'green'}));
-R.g3 = tag(addHold('right',{u:0.1,v:0.0,s:.16,kind:'sloper',color:'green'}));
-R.g4 = tag(addHold('right',{u:0.6,v:-0.7,s:.14,kind:'crimp',color:'green'}));
-R.g5 = tag(addHold('right',{u:0.3,v:-1.5,s:.16,kind:'sloper',color:'green'}));
-R.g6 = tag(addHold('right',{u:-0.5,v:-0.9,s:.13,kind:'foot',color:'green'}));
-R.bl1 = tag(addHold('right',{u:-0.9,v:1.2,s:.14,kind:'sloper',color:'blue'}));
-R.bl2 = tag(addHold('right',{u:-1.1,v:0.3,s:.15,kind:'jug',color:'blue'}));
-R.gr1 = tag(addHold('right',{u:-0.7,v:-0.2,s:.13,kind:'pinch',color:'grey'}));
-R.pu1 = tag(addHold('right',{u:1.0,v:-1.9,s:.12,kind:'foot',color:'purple'}));
-
-// ---- FAR-RIGHT return: green + yellow (photo 1 far right) ----
-const F = {};
-F.v1 = tag(addHold('farR',{u:-0.6,v:0.9,s:.6,vol:'halfDome',color:'yellow',rot:0.5}));
-F.g1 = tag(addHold('farR',{u:0.7,v:1.4,s:.15,kind:'sloper',color:'green'}));
-F.g2 = tag(addHold('farR',{u:0.9,v:0.4,s:.16,kind:'jug',color:'green'}));
-F.g3 = tag(addHold('farR',{u:0.6,v:-0.6,s:.15,kind:'sloper',color:'green'}));
-F.g4 = tag(addHold('farR',{u:1.0,v:-1.4,s:.14,kind:'crimp',color:'green'}));
-
-/* =========================================================================
-   ROUTES  — each groups holds into a climb, with grade + level band.
-   level: 1=Beginner, 2=Intermediate, 3=Advanced
-   ========================================================================= */
-const ROUTES = [
-  { id:'r1', name:'Green Machine', grade:'V1', level:1, color:COL.green, style:'Slab · big jugs',
-    desc:'Warm-up ladder up the right face on the green jugs. Feet on anything.',
-    holds:[R.g5,R.g4,R.g3,R.g2,R.g1, F.g4,F.g3,F.g2,F.g1] },
-  { id:'r2', name:'Blue Streak', grade:'V2', level:1, color:COL.blue, style:'Vertical · slopers',
-    desc:'Follow the blue line up the mid-left face into the prow.',
-    holds:[M.b4,M.b3,M.b2,M.b1, P.b1,P.b2, M.b1] },
-  { id:'r3', name:'Lemon Drop', grade:'V3', level:2, color:COL.yellow, style:'Overhang · volumes',
-    desc:'Yellow volumes only, right face. Big moves between the quarter-domes.',
-    holds:[R.vBig,R.vMid,R.vTop, F.v1] },
-  { id:'r4', name:'The Spine', grade:'V4', level:2, color:COL.purple, style:'Arête · compression',
-    desc:'Climb the central prow — squeeze the split half-spheres and rock over the top.',
-    holds:[P.yL2,P.yR2,P.yL1,P.yR1,P.y0, P.t1,P.t2] },
-  { id:'r5', name:'Pink Panther', grade:'V4', level:2, color:COL.pink, style:'Left wall · crimps',
-    desc:'Technical crimping on the left return past the yellow quarter volumes.',
-    holds:[L.p4,L.p3,L.p2,L.p1, L.volBot,L.volMid,L.volTop] },
-  { id:'r6', name:'Grey Matter', grade:'V6', level:3, color:COL.grey, style:'Prow · dyno finish',
-    desc:'Powerful line up the grey triangular volumes with a dynamic finish to the top jug.',
-    holds:[M.t3,M.t2,M.t1, M.g2, P.y0] },
-  { id:'r7', name:'Full Send', grade:'V7', level:3, color:COL.yellow, style:'Traverse · endurance',
-    desc:'Corner traverse: start far right, cross the prow, top out on the left volumes.',
-    holds:[R.vBig,R.vMid,P.yR2,P.yL2,M.t3,L.volMid,L.volTop] },
-];
-// register route membership on holds
-ROUTES.forEach(rt => rt.holds.forEach(id => byId[id] && byId[id].userData.routes.push(rt.id)));
-
-/* =========================================================================
-   INTERACTION — highlight / dim / isolate
-   ========================================================================= */
-let activeRoute = null;
-
+let active=null;
 function applyView(){
-  const set = activeRoute ? new Set(ROUTES.find(r=>r.id===activeRoute).holds) : null;
-  allHolds.forEach(h=>{
-    const ud = h.userData;
-    if(!set){ // show all, neutral
-      ud.mat.opacity = 1; ud.mat.transparent = false;
-      ud.mat.emissiveIntensity = 0;
-      ud.mat.color.setHex(ud.baseColor);
-    } else if(set.has(ud.id)){ // in active route → glow
-      ud.mat.opacity = 1; ud.mat.transparent = false;
-      ud.mat.emissiveIntensity = 0.55;
-      ud.mat.color.setHex(ud.baseColor);
-    } else { // dimmed
-      ud.mat.transparent = true; ud.mat.opacity = 0.16;
-      ud.mat.emissiveIntensity = 0;
-      ud.mat.color.setHex(0x2b2f36);
-    }
-  });
+  const set=active?new Set(byRoute[active].holds):null;
+  allHolds.forEach(h=>{const u=h.userData;
+    if(!set){u.mat.opacity=1;u.mat.transparent=false;u.mat.emissiveIntensity=0;u.mat.color.setHex(u.baseColor);}
+    else if(set.has(u.id)){u.mat.opacity=1;u.mat.transparent=false;u.mat.emissiveIntensity=.5;u.mat.color.setHex(u.baseColor);}
+    else{u.mat.transparent=true;u.mat.opacity=.12;u.mat.emissiveIntensity=0;u.mat.color.setHex(0x2b2f36);}});
 }
-
-function selectRoute(id){
-  activeRoute = (activeRoute===id) ? null : id;
-  applyView();
-  // sidebar state
-  document.querySelectorAll('.route').forEach(el=>el.classList.toggle('active', el.dataset.id===activeRoute));
-  // detail card
-  const d = document.getElementById('detail');
-  if(activeRoute){
-    const r = ROUTES.find(x=>x.id===activeRoute);
-    d.classList.add('show');
-    d.querySelector('.swatch').style.background = '#'+r.color.toString(16).padStart(6,'0');
-    d.querySelector('.nm').textContent = r.name;
-    d.querySelector('.grade').textContent = r.grade;
-    d.querySelector('[data-level]').textContent = ['','Beginner','Intermediate','Advanced'][r.level];
-    d.querySelector('[data-holds]').textContent = new Set(r.holds).size;
-    d.querySelector('[data-style]').textContent = r.style.split(' · ')[0];
-    d.querySelector('[data-desc]').textContent = r.desc;
-    frameRoute(r);
-  } else {
-    d.classList.remove('show');
-  }
+function select(id){
+  active=(active===id)?null:id; applyView();
+  document.querySelectorAll('.route').forEach(el=>el.classList.toggle('active',el.dataset.id===active));
+  const d=document.getElementById('detail');
+  if(active){const r=byRoute[active];d.classList.add('show');
+    d.querySelector('.swatch').style.background='#'+r.color.toString(16).padStart(6,'0');
+    d.querySelector('.nm').textContent=r.name; d.querySelector('.grade').textContent=r.grade;
+    d.querySelector('[data-level]').textContent=['','Beginner','Intermediate','Advanced'][r.level];
+    d.querySelector('[data-holds]').textContent=r.holds.length;
+    d.querySelector('[data-style]').textContent=r.style.split(' · ')[0];
+    d.querySelector('[data-desc]').textContent=r.desc;
+  } else d.classList.remove('show');
 }
+const ray=new R.Raycaster(),mouse=new R.Vector2(); let downXY=null;
+renderer.domElement.addEventListener('pointerdown',e=>downXY=[e.clientX,e.clientY]);
+renderer.domElement.addEventListener('pointerup',e=>{if(!downXY)return;
+  if(Math.hypot(e.clientX-downXY[0],e.clientY-downXY[1])>6)return;
+  mouse.x=(e.clientX/innerWidth)*2-1;mouse.y=-(e.clientY/innerHeight)*2+1;ray.setFromCamera(mouse,camera);
+  const hit=ray.intersectObjects(allHolds,false)[0];
+  if(hit)select(hit.object.userData.colorName);});
 
-// gently frame the camera on a route's holds
-const _v = new THREE.Vector3();
-function frameRoute(r){
-  const box = new THREE.Box3();
-  new Set(r.holds).forEach(id=>{ const h=byId[id]; if(h){ h.getWorldPosition(_v); box.expandByPoint(_v);} });
-  if(box.isEmpty()) return;
-  const c = box.getCenter(new THREE.Vector3());
-  tweenTarget(c, 3200);
-}
+/* sidebar */
+const listEl=document.getElementById('list');
+ROUTES.forEach(r=>{const el=document.createElement('div');el.className='route';el.dataset.id=r.id;
+  el.innerHTML=`<span class="swatch" style="background:#${r.color.toString(16).padStart(6,'0')}"></span>
+    <div class="meta"><div class="nm">${r.name}</div>
+    <div class="sub">${['','Beginner','Intermediate','Advanced'][r.level]} · ${r.holds.length} holds</div></div>
+    <span class="grade">${r.grade}</span>`;
+  el.onclick=()=>select(r.id); listEl.appendChild(el);});
 
-/* ---------- raycast: click holds in the 3D view ---------- */
-const ray = new THREE.Raycaster(); const mouse = new THREE.Vector2();
-let downXY=null;
-renderer.domElement.addEventListener('pointerdown', e=> downXY=[e.clientX,e.clientY]);
-renderer.domElement.addEventListener('pointerup', e=>{
-  if(!downXY) return;
-  if(Math.hypot(e.clientX-downXY[0], e.clientY-downXY[1])>6) return; // was a drag
-  mouse.x = (e.clientX/innerWidth)*2-1; mouse.y = -(e.clientY/innerHeight)*2+1;
-  ray.setFromCamera(mouse, camera);
-  const hit = ray.intersectObjects(allHolds, false)[0];
-  if(hit && hit.object.userData.routes.length){
-    selectRoute(hit.object.userData.routes[0]);
-  }
-});
+document.getElementById('btnAll').onclick=()=>{if(active)select(active);tweenCam(HOME.pos);tweenTarget(HOME.tgt);};
+document.getElementById('btnReset').onclick=()=>{tweenCam(HOME.pos);tweenTarget(HOME.tgt);};
+let labelsOn=false;
+document.getElementById('btnLabels').onclick=e=>{labelsOn=!labelsOn;tagSprites.forEach(s=>s.visible=labelsOn);e.currentTarget.classList.toggle('on',labelsOn);};
 
-/* =========================================================================
-   SIDEBAR UI
-   ========================================================================= */
-const LEVELS = [{n:0,t:'All'},{n:1,t:'Beginner'},{n:2,t:'Interm.'},{n:3,t:'Advanced'}];
-let levelFilter = 0;
-const levelsEl = document.getElementById('levels');
-LEVELS.forEach(l=>{
-  const b=document.createElement('button'); b.textContent=l.t; b.dataset.n=l.n;
-  if(l.n===0) b.classList.add('on');
-  b.onclick=()=>{ levelFilter=l.n; document.querySelectorAll('.levels button').forEach(x=>x.classList.toggle('on',+x.dataset.n===levelFilter)); renderList(); };
-  levelsEl.appendChild(b);
-});
-
-const listEl = document.getElementById('list');
-function renderList(){
-  listEl.innerHTML='';
-  const rs = ROUTES.filter(r=> levelFilter===0 || r.level===levelFilter);
-  rs.forEach(r=>{
-    const el=document.createElement('div'); el.className='route'; el.dataset.id=r.id;
-    if(r.id===activeRoute) el.classList.add('active');
-    el.innerHTML = `
-      <span class="swatch" style="background:#${r.color.toString(16).padStart(6,'0')}"></span>
-      <div class="meta"><div class="nm">${r.name}</div>
-        <div class="sub">${['','Beginner','Intermediate','Advanced'][r.level]} · ${r.style}</div></div>
-      <span class="grade">${r.grade}</span>`;
-    el.onclick=()=>selectRoute(r.id);
-    listEl.appendChild(el);
-  });
-}
-renderList();
-
-document.getElementById('btnAll').onclick=()=>{ if(activeRoute) selectRoute(activeRoute); tweenTarget(HOME.tgt,0); tweenCam(HOME.pos); };
-document.getElementById('btnReset').onclick=()=>{ tweenCam(HOME.pos); tweenTarget(HOME.tgt); };
-
-/* ---------- tiny tweens ---------- */
-let camTween=null, tgtTween=null;
-function tweenCam(to){ camTween={from:camera.position.clone(),to:to.clone(),t:0}; }
-function tweenTarget(to,ms=600){ tgtTween={from:controls.target.clone(),to:to.clone(),t:0,dur:ms}; }
-function ease(t){ return t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2; }
-
-/* =========================================================================
-   RENDER LOOP
-   ========================================================================= */
+/* tweens + loop */
+let camTween=null,tgtTween=null;
+function tweenCam(to){camTween={from:camera.position.clone(),to:to.clone(),t:0};}
+function tweenTarget(to){tgtTween={from:controls.target.clone(),to:to.clone(),t:0};}
+const ease=t=>t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
 let last=performance.now();
-function loop(now){
-  const dt = Math.min((now-last)/1000,.05); last=now;
-  if(camTween){ camTween.t=Math.min(camTween.t+dt/0.9,1); camera.position.lerpVectors(camTween.from,camTween.to,ease(camTween.t)); if(camTween.t>=1)camTween=null; }
-  if(tgtTween){ tgtTween.t=Math.min(tgtTween.t+dt/(tgtTween.dur/1000||.6),1); controls.target.lerpVectors(tgtTween.from,tgtTween.to,ease(tgtTween.t)); if(tgtTween.t>=1)tgtTween=null; }
-  controls.update();
-  renderer.render(scene,camera);
-  requestAnimationFrame(loop);
-}
-applyView();
-requestAnimationFrame(loop);
+function loop(now){const dt=Math.min((now-last)/1000,.05);last=now;
+  if(camTween){camTween.t=Math.min(camTween.t+dt/.9,1);camera.position.lerpVectors(camTween.from,camTween.to,ease(camTween.t));if(camTween.t>=1)camTween=null;}
+  if(tgtTween){tgtTween.t=Math.min(tgtTween.t+dt/.9,1);controls.target.lerpVectors(tgtTween.from,tgtTween.to,ease(tgtTween.t));if(tgtTween.t>=1)tgtTween=null;}
+  controls.update();renderer.render(scene,camera);requestAnimationFrame(loop);}
+applyView();requestAnimationFrame(loop);
 document.getElementById('loading').style.display='none';
-
-addEventListener('resize',()=>{
-  camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix();
-  renderer.setSize(innerWidth,innerHeight);
-});
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
 </script>
 </body>
 </html>
