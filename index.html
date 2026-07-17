@@ -5,18 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
 <title>Get a Grip — Prow Wall</title>
 <style>
-  :root{
-    --bg:#0b0d10; --panel:#15181d; --panel2:#1c2027; --line:#2a2f38;
-    --ink:#f2f4f7; --muted:#8b93a1; --accent:#ffd21e;
-    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  }
+  :root{--bg:#0a0c0f;--panel:#15181d;--panel2:#1c2027;--line:#2a2f38;--ink:#f2f4f7;--muted:#8b93a1;--accent:#ffd21e;
+    --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
   *{box-sizing:border-box}
   html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:var(--font);overflow:hidden}
   #app{position:fixed;inset:0} canvas{display:block}
-  #ui{position:absolute;top:0;left:0;height:100%;width:322px;
-    background:linear-gradient(180deg,rgba(21,24,29,.96),rgba(11,13,16,.96));
+  #ui{position:absolute;top:0;left:0;height:100%;width:320px;
+    background:linear-gradient(180deg,rgba(21,24,29,.94),rgba(10,12,15,.94));
     border-right:1px solid var(--line);display:flex;flex-direction:column;backdrop-filter:blur(8px);z-index:10}
-  .brand{padding:20px 20px 15px;border-bottom:1px solid var(--line)}
+  .brand{padding:20px 20px 14px;border-bottom:1px solid var(--line)}
   .brand h1{margin:0;font-size:19px;letter-spacing:.02em;font-weight:800;display:flex;align-items:center;gap:9px}
   .brand h1 .dot{width:11px;height:11px;border-radius:3px;background:var(--accent);box-shadow:0 0 12px var(--accent)}
   .brand p{margin:5px 0 0;font-size:12px;color:var(--muted)}
@@ -31,7 +28,7 @@
   .route .meta{flex:1;min-width:0}
   .route .meta .nm{font-size:14px;font-weight:600;line-height:1.2}
   .route .meta .sub{font-size:11.5px;color:var(--muted);margin-top:2px}
-  .route .grade{font-size:12px;font-weight:800;padding:3px 8px;border-radius:6px;background:#0b0d10;color:var(--accent)}
+  .route .grade{font-size:12px;font-weight:800;padding:3px 8px;border-radius:6px;background:#0a0c0f;color:var(--accent)}
   .hint{padding:12px 20px;border-top:1px solid var(--line);font-size:11.5px;color:var(--muted);line-height:1.5}
   #topbar{position:absolute;top:14px;right:14px;display:flex;gap:8px;z-index:10}
   #topbar button{padding:9px 14px;font-size:12.5px;font-weight:600;color:var(--ink);
@@ -54,24 +51,23 @@
   #detail .setter{font-size:12px;color:var(--muted);margin-top:12px;line-height:1.5}
   #loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
     background:var(--bg);z-index:50;color:var(--muted);font-size:14px}
-  @media(max-width:720px){#ui{width:100%;height:auto;max-height:44%;bottom:0;top:auto;border-right:none;border-top:1px solid var(--line)}#detail{display:none}}
+  @media(max-width:720px){#ui{width:100%;height:auto;max-height:42%;bottom:0;top:auto;border-right:none;border-top:1px solid var(--line)}#detail{display:none}}
 </style>
 </head>
 <body>
 <div id="app"></div>
-<div id="loading">Building prow…</div>
+<div id="loading">Loading wall…</div>
 
 <div id="ui">
   <div class="brand"><h1><span class="dot"></span>GET A GRIP</h1><p>Prow wall · routes by colour</p></div>
   <div class="sect">Routes</div>
   <div class="list" id="list"></div>
-  <div class="hint">Each colour is a route. Drag to orbit · scroll to zoom · click a route or tap a hold to isolate it.</div>
+  <div class="hint">Each colour is a route. Drag to orbit · scroll to zoom · click a route or a hold to isolate it.</div>
 </div>
 
 <div id="topbar">
   <button id="btnReset"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v4h4"/></svg>Reset</button>
-  <button id="btnAll"><svg viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>Show all</button>
-  <button id="btnLabels"><svg viewBox="0 0 24 24"><path d="M4 4h10l6 8-6 8H4z"/><circle cx="8" cy="12" r="1.3"/></svg>Tags</button>
+  <button id="btnAll"><svg viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>All holds</button>
 </div>
 
 <div id="detail">
@@ -94,272 +90,202 @@
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-const R=THREE, PI=Math.PI, rad=d=>d*PI/180, rnd=(a,b)=>a+Math.random()*(b-a);
+const R=THREE, PI=Math.PI;
 
 /* =========================================================================
-   GET A GRIP — 1:1 reconstruction of the PROW wall (photo #2).
-   Two panels meeting at a vertical arête + a dark right return.
-   Holds are placed from a measured trace of the photo (fx,fy fractions).
-   A "route" = one hold colour. Camera is head-on to match the photo.
+   GET A GRIP — the REAL prow photo draped over a 3D prow mesh.
+   Vertex displacement builds the prow (arête bulges toward viewer, wings
+   fold back). Interactive colour-routes are overlaid as glowing rings that
+   sit exactly on the photographed holds.  fx,fy = photo fractions (0..1).
    ========================================================================= */
-const scene=new R.Scene(); scene.background=new R.Color(0x0b0d10);
-scene.fog=new R.Fog(0x0b0d10,18,44);
+const scene=new R.Scene(); scene.background=new R.Color(0x0a0c0f);
+scene.fog=new R.Fog(0x0a0c0f,22,50);
 const renderer=new R.WebGLRenderer({antialias:true});
 renderer.setPixelRatio(Math.min(devicePixelRatio,2)); renderer.setSize(innerWidth,innerHeight);
-renderer.shadowMap.enabled=true; renderer.shadowMap.type=R.PCFSoftShadowMap;
-renderer.toneMapping=R.ACESFilmicToneMapping; renderer.toneMappingExposure=1.15;
+renderer.toneMapping=R.ACESFilmicToneMapping; renderer.toneMappingExposure=1.05;
 document.getElementById('app').appendChild(renderer.domElement);
 
 const camera=new R.PerspectiveCamera(46,innerWidth/innerHeight,0.1,200);
-const HOME={pos:new R.Vector3(0.15,2.7,9.6),tgt:new R.Vector3(0.2,2.55,0)};
+const HOME={pos:new R.Vector3(0,3.35,10.6),tgt:new R.Vector3(0,3.15,0.5)};
 camera.position.copy(HOME.pos);
 const controls=new OrbitControls(camera,renderer.domElement);
 controls.enableDamping=true; controls.dampingFactor=.08; controls.target.copy(HOME.tgt);
-controls.minDistance=4.5; controls.maxDistance=20;
-controls.maxPolarAngle=PI*0.55; controls.minPolarAngle=PI*0.16;
-controls.minAzimuthAngle=-0.8; controls.maxAzimuthAngle=0.8;
+controls.minDistance=5; controls.maxDistance=18;
+controls.maxPolarAngle=PI*0.56; controls.minPolarAngle=PI*0.2;
+controls.minAzimuthAngle=-0.85; controls.maxAzimuthAngle=0.85;
 
-/* lighting — warm left key (photo has a hot left light) + magenta rim + fill */
-scene.add(new R.HemisphereLight(0x37455a,0x0a0b0d,.5));
-const key=new R.SpotLight(0xfff0cf,150,36,PI/4,.55,1.3);
-key.position.set(-5,8.5,9); key.target.position.set(-1.5,2.5,0);
-key.castShadow=true; key.shadow.mapSize.set(2048,2048); key.shadow.bias=-0.0003; scene.add(key,key.target);
-const fillW=new R.SpotLight(0xffe6c0,70,36,PI/4.5,.6,1.4);
-fillW.position.set(4,8,9); fillW.target.position.set(2,2.5,0); scene.add(fillW,fillW.target);
-const rim=new R.SpotLight(0xff2ea6,34,42,PI/3.5,.7,1.5); rim.position.set(6,8.2,-4); scene.add(rim);
-const sky=new R.DirectionalLight(0x6f86c8,.4); sky.position.set(6,5,8); scene.add(sky); // blue sky top-right
-scene.add(new R.DirectionalLight(0x8fa8c8,.2).translateZ(10));
+scene.add(new R.AmbientLight(0xffffff,0.9));
+const dl=new R.DirectionalLight(0xffffff,0.35); dl.position.set(-3,6,8); scene.add(dl);
 
-/* ---------- textures ---------- */
-function wallTexture(){
-  const c=document.createElement('canvas'); c.width=c.height=1024; const x=c.getContext('2d');
-  x.fillStyle='#111318'; x.fillRect(0,0,1024,1024);
-  for(let i=0;i<44;i++){x.globalAlpha=rnd(.02,.05);x.strokeStyle='#1c2027';x.lineWidth=rnd(1,3);
-    x.beginPath();let y=rnd(0,1024);x.moveTo(0,y);for(let px=0;px<1024;px+=40)x.lineTo(px,y+rnd(-8,8));x.stroke();}
-  for(let i=0;i<460;i++){const r=rnd(6,48);x.globalAlpha=rnd(.015,.06);x.fillStyle='#dfe3e9';
-    x.beginPath();x.arc(rnd(0,1024),rnd(0,780),r,0,7);x.fill();}
-  x.globalAlpha=1;x.fillStyle='#04050a';
-  for(let gy=44;gy<1024;gy+=64)for(let gx=40;gx<1024;gx+=64){x.beginPath();x.arc(gx+((gy/64|0)%2)*32,gy,4,0,7);x.fill();}
-  const t=new R.CanvasTexture(c);t.colorSpace=R.SRGBColorSpace;t.wrapS=t.wrapT=R.RepeatWrapping;t.anisotropy=8;return t;
+/* ---------- prow geometry: displaced plane ----------
+   W×H plane, bottom sitting at y=0. z = prow depth as a function of (u,v). */
+const W=9.4, H=7.05;
+function clamp(x,a,b){return Math.max(a,Math.min(b,x));}
+function sstep(a,b,x){x=clamp((x-a)/(b-a),0,1);return x*x*(3-2*x);}
+function zProw(fx,fy){                       // fx 0..1 (L→R), fy 0..1 (top→bottom)
+  const ridge=Math.exp(-Math.pow((fx-0.50)/0.24,2));  // central arête bulge
+  let z=1.35*ridge;
+  z-=0.95*sstep(0.72,1.0,fx);                // right wing folds back (steep dark panel)
+  z-=0.55*sstep(0.34,0.0,fx);                // left wing recedes
+  z+=0.18*(1-fy);                            // apex is lower/closer, top recedes a touch
+  return z;
 }
-const wallTex=wallTexture();
-function wallMat(rep,tint=0x181b20){const t=wallTex.clone();t.needsUpdate=true;t.repeat.set(...rep);
-  return new R.MeshStandardMaterial({map:t,color:tint,roughness:.94,metalness:.03});}
+const surf=(fx,fy)=>new R.Vector3((fx-0.5)*W,(1-fy)*H,zProw(fx,fy)); // world pos of a photo point
 
-/* ---------- wall panels (the prow) ----------
-   Left/main panel bright, right panel angles back, far-right dark return.
-   The vertical arête runs near worldX≈+0.4 where the two main panels fold. */
-function panel(mesh){mesh.receiveShadow=true;mesh.castShadow=true;scene.add(mesh);return mesh;}
-const pMain=panel(new R.Mesh(new R.PlaneGeometry(6.6,4.95), wallMat([3.2,2.4],0x1a1d23)));
-pMain.position.set(-1.0,2.45,0); pMain.rotation.y=rad(6);
-const pRight=panel(new R.Mesh(new R.PlaneGeometry(2.7,4.95), wallMat([1.4,2.4],0x141519)));
-pRight.position.set(2.35,2.42,-0.25); pRight.rotation.y=rad(-34);
-const pFar=panel(new R.Mesh(new R.PlaneGeometry(2.0,4.95), wallMat([1.1,2.4],0x0e0f13)));
-pFar.position.set(3.75,2.4,0.9); pFar.rotation.y=rad(-64);
-// subtle prow ridge down the fold
-const ridge=panel(new R.Mesh(new R.BoxGeometry(0.12,4.95,0.5), wallMat([.3,2.4],0x15171c)));
-ridge.position.set(0.55,2.45,0.28); ridge.rotation.y=rad(-14);
+const geo=new R.PlaneGeometry(W,H,140,108);
+const pos=geo.attributes.position;
+for(let i=0;i<pos.count;i++){
+  const fx=(pos.getX(i)+W/2)/W, fy=1-(pos.getY(i)+H/2)/H;
+  pos.setZ(i, zProw(fx,fy));
+}
+geo.computeVertexNormals();
+const tex=new R.TextureLoader().load('wall_prow.jpg',()=>document.getElementById('loading').style.display='none');
+tex.colorSpace=R.SRGBColorSpace; tex.anisotropy=renderer.capabilities.getMaxAnisotropy();
+const wallMat=new R.MeshBasicMaterial({map:tex,color:0xffffff});   // unlit → looks exactly like the photo
+const wall=new R.Mesh(geo,wallMat); wall.position.y=H/2; scene.add(wall);
 
-/* roof + beams + mat */
-(function surroundings(){
-  const rc=document.createElement('canvas');rc.width=256;rc.height=64;const rx=rc.getContext('2d');
-  for(let i=0;i<256;i+=16){const g=rx.createLinearGradient(i,0,i+16,0);
-    g.addColorStop(0,'#20242b');g.addColorStop(.5,'#3a4048');g.addColorStop(1,'#20242b');rx.fillStyle=g;rx.fillRect(i,0,16,64);}
-  const rt=new R.CanvasTexture(rc);rt.colorSpace=R.SRGBColorSpace;rt.wrapS=rt.wrapT=R.RepeatWrapping;rt.repeat.set(10,3);
-  const roof=new R.Mesh(new R.PlaneGeometry(16,9),new R.MeshStandardMaterial({map:rt,color:0x2a2f36,roughness:.6,metalness:.5}));
-  roof.rotation.x=PI/2; roof.position.set(0,5.1,0.3); scene.add(roof);
-  const beamMat=new R.MeshStandardMaterial({color:0x6b4f33,roughness:.9});
-  for(let i=-2;i<=2;i++){const b=new R.Mesh(new R.BoxGeometry(16,.18,.34),beamMat);b.position.set(0,5.02,i*1.8+0.3);b.castShadow=true;scene.add(b);}
-  const matMat=new R.MeshStandardMaterial({color:0x5a5348,roughness:.98});
-  const m=new R.Mesh(new R.CircleGeometry(9,56),matMat);m.rotation.x=-PI/2;m.position.y=0.02;m.receiveShadow=true;scene.add(m);
-})();
+/* soft dark mat on the floor */
+const mat=new R.Mesh(new R.CircleGeometry(9,48),new R.MeshBasicMaterial({color:0x14161a}));
+mat.rotation.x=-PI/2; mat.position.set(0,0.01,3); scene.add(mat);
 
 /* =========================================================================
-   HOLD FACTORY — place at world (x,y,z), oriented facing the camera (+z).
+   HOLDS — traced from the photo (fx,fy).  colour = route.
    ========================================================================= */
-const COL={yellow:0xf2c40c,green:0x51c144,blue:0x3a72b6,grey:0x968d7f,pink:0xcf6a8a,purple:0x7a4ea0,tan:0xbcae8f};
-const geoCache={};
-function jitter(g,a){const p=g.attributes.position;for(let i=0;i<p.count;i++)p.setXYZ(i,p.getX(i)*(1+rnd(-a,a)),p.getY(i)*(1+rnd(-a,a)),p.getZ(i)*(1+rnd(-a,a)));g.computeVertexNormals();return g;}
-function holdGeo(k){ if(geoCache[k])return geoCache[k]; let g;
-  switch(k){
-    case 'jug':    g=jitter(new R.SphereGeometry(1,18,14),.12);g.scale(1,.62,.55);break;
-    case 'sloper': g=jitter(new R.SphereGeometry(1,20,16,0,PI*2,0,PI/2),.08);g.scale(1,.5,1);break;
-    case 'crimp':  g=jitter(new R.SphereGeometry(1,16,10),.06);g.scale(1,.28,.42);break;
-    case 'pinch':  g=jitter(new R.SphereGeometry(1,14,12),.14);g.scale(.6,.72,.5);break;
-    case 'foot':   g=jitter(new R.IcosahedronGeometry(1,0),.12);g.scale(.72,.62,.5);break;
-    default:       g=new R.SphereGeometry(1,12,10);
-  } geoCache[k]=g; return g; }
+const COL={yellow:0xf2c40c,green:0x54c341,blue:0x4384c8,grey:0xb9b0a0,purple:0x8f5bb0};
+// [fx, fy, colour, size]
+const HOLDS=[
+  // ---- YELLOW volumes (big quarter-pie splits + smalls) ----
+  [.088,.080,'yellow',.55],[.385,.255,'yellow',.72],[.570,.200,'yellow',.5],
+  [.720,.117,'yellow',.5],[.675,.567,'yellow',.72],[.385,.667,'yellow',.66],
+  [.880,.940,'yellow',.55],[.825,.410,'yellow',.22],[.772,.600,'yellow',.2],[.792,.605,'yellow',.18],
+  // ---- GREEN ----
+  [.180,.100,'green',.28],[.145,.190,'green',.22],[.150,.223,'green',.2],
+  [.093,.453,'green',.34],[.118,.493,'green',.22],
+  [.068,.823,'green',.24],[.180,.827,'green',.24],[.215,.860,'green',.2],
+  [.300,.673,'green',.26],[.308,.727,'green',.2],[.325,.767,'green',.2],
+  // ---- BLUE ----
+  [.215,.080,'blue',.22],[.230,.200,'blue',.24],[.238,.313,'blue',.22],
+  [.250,.440,'blue',.22],[.258,.467,'blue',.2],
+  [.395,.423,'blue',.24],[.405,.460,'blue',.22],
+  [.540,.520,'blue',.22],[.625,.593,'blue',.24],[.618,.667,'blue',.22],
+  [.645,.720,'blue',.22],[.660,.787,'blue',.22],[.880,.603,'blue',.22],[.895,.643,'blue',.2],
+  // ---- GREY / neutral ----
+  [.180,.200,'grey',.22],[.485,.240,'grey',.2],[.505,.313,'grey',.2],[.525,.267,'grey',.2],
+  [.550,.287,'grey',.2],[.710,.073,'grey',.24],[.825,.327,'grey',.22],[.950,.427,'grey',.22],[.480,.360,'grey',.2],
+  // ---- PURPLE ----
+  [.030,.823,'purple',.24],
+];
 
-const WX=fx=>-3.9+fx*7.8, WY=fy=>4.7-fy*4.55;   // photo-fraction → world
-const allHolds=[], byId={}; let HID=0; const tagSprites=[];
-function tagTex(n){const c=document.createElement('canvas');c.width=c.height=64;const x=c.getContext('2d');
-  x.fillStyle='#f4d20e';x.fillRect(6,6,52,52);x.fillStyle='#111';x.font='bold 40px sans-serif';
-  x.textAlign='center';x.textBaseline='middle';x.fillText(n,32,36);
-  const t=new R.CanvasTexture(c);t.colorSpace=R.SRGBColorSpace;return t;}
-
-function mkHold(mesh,color,tag,x,y){
-  mesh.castShadow=true; mesh.receiveShadow=true; scene.add(mesh);
-  mesh.userData={id:++HID,baseColor:COL[color],colorName:color,mat:mesh.material,tag};
-  allHolds.push(mesh); byId[mesh.userData.id]=mesh;
-  if(tag){const sp=new R.Sprite(new R.SpriteMaterial({map:tagTex(tag),depthTest:false}));
-    sp.scale.set(.17,.17,.17);sp.position.set(x+.22,y-.22,.9);sp.visible=false;scene.add(sp);tagSprites.push(sp);}
-  return mesh.userData.id;
+/* ring sprite texture (white ring + glow; tinted per hold) */
+function ringTex(){
+  const c=document.createElement('canvas');c.width=c.height=128;const x=c.getContext('2d');
+  const cx=64,cy=64;
+  const g=x.createRadialGradient(cx,cy,20,cx,cy,64); g.addColorStop(0,'rgba(255,255,255,0)');
+  g.addColorStop(.62,'rgba(255,255,255,0)');g.addColorStop(.75,'rgba(255,255,255,.95)');
+  g.addColorStop(.9,'rgba(255,255,255,.25)');g.addColorStop(1,'rgba(255,255,255,0)');
+  x.fillStyle=g;x.fillRect(0,0,128,128);
+  x.strokeStyle='rgba(255,255,255,1)';x.lineWidth=7;x.beginPath();x.arc(cx,cy,42,0,7);x.stroke();
+  const t=new R.CanvasTexture(c);t.colorSpace=R.SRGBColorSpace;return t;
 }
-// small/medium bolt-on hold
-function hold({fx,fy,z=0.04,s=.16,k='jug',c='grey',rot=0,tag=null}){
-  const x=WX(fx),y=WY(fy);
-  const m=new R.Mesh(holdGeo(k),new R.MeshStandardMaterial({color:COL[c],roughness:.62,metalness:.02,emissive:new R.Color(COL[c]),emissiveIntensity:0}));
-  m.scale.setScalar(s); m.position.set(x,y,z); m.rotation.set(rnd(-.2,.2),0,rot); return mkHold(m,c,tag,x,y);
-}
-// quarter-pie volume (the yellow "blocks"): flat beveled quarter-disc
-function pie({fx,fy,z=0.05,radius=.5,rot=0,c='yellow',tag=null}){
-  const x=WX(fx),y=WY(fy);
-  const g=new R.CylinderGeometry(radius*0.72,radius, radius*0.5, 26,1,false,0,PI/2);
-  g.rotateX(PI/2);                          // disc faces +z
-  const m=new R.Mesh(g,new R.MeshStandardMaterial({color:COL[c],roughness:.42,metalness:.02,emissive:new R.Color(COL[c]),emissiveIntensity:0}));
-  m.position.set(x,y,z); m.rotation.z=rot;  // spin the wedge
-  return mkHold(m,c,tag,x,y);
-}
-// split half-dome = two quarter pies sharing a seam (the signature yellow feature)
-function splitDome({fx,fy,radius=.55,rot=0,c='yellow',tag=null}){
-  const ids=[]; const x=WX(fx),y=WY(fy);
-  ids.push(pie({fx,fy,radius,rot,c,tag}));
-  ids.push(pie({fx,fy,radius,rot:rot+PI/2+0.05,c}));   // second wedge, tiny gap
-  return ids;
-}
-
-/* =========================================================================
-   PLACED HOLDS — traced from photo #2 (fx: 0 left→1 right, fy: 0 top→1 bottom)
-   ========================================================================= */
-// ---- YELLOW volumes (the split quarter-pie half-domes + singles) ----
-pie      ({fx:.09,fy:.13,radius:.62,rot:rad(200),tag:'3'});           // top-left single
-splitDome({fx:.37,fy:.24,radius:.5, rot:rad(20), tag:'3'});           // centre-top split
-pie      ({fx:.55,fy:.21,radius:.42,rot:rad(250),tag:'3'});           // upper-mid single
-pie      ({fx:.74,fy:.11,radius:.5, rot:rad(300)});                   // top-right single (cut)
-splitDome({fx:.70,fy:.53,radius:.55,rot:rad(-40),tag:'4'});           // right-centre split
-splitDome({fx:.33,fy:.70,radius:.55,rot:rad(15), tag:'3'});           // lower-centre split
-pie      ({fx:.015,fy:.55,radius:.5,rot:rad(120)});                   // left-edge (cut)
-pie      ({fx:.82,fy:.86,radius:.52,rot:rad(90)});                    // bottom-right (cut)
-hold     ({fx:.775,fy:.40,s:.12,k:'foot',c:'yellow'});               // tiny yellow foot
-hold     ({fx:.735,fy:.60,s:.11,k:'crimp',c:'yellow'});              // tiny yellow near "4"
-
-// ---- GREEN route (upper-left cluster + lower-centre + scattered) ----
-hold({fx:.17,fy:.20,s:.17,k:'foot',c:'green',rot:.4,tag:'3'});
-hold({fx:.13,fy:.28,s:.16,k:'sloper',c:'green'});
-hold({fx:.145,fy:.35,s:.15,k:'jug',c:'green'});
-hold({fx:.10,fy:.52,s:.18,k:'sloper',c:'green'});
-hold({fx:.055,fy:.63,s:.13,k:'foot',c:'green'});
-hold({fx:.08,fy:.72,s:.13,k:'foot',c:'green'});
-hold({fx:.28,fy:.70,s:.15,k:'sloper',c:'green'});
-hold({fx:.30,fy:.79,s:.12,k:'foot',c:'green'});
-hold({fx:.325,fy:.85,s:.12,k:'foot',c:'green'});
-hold({fx:.60,fy:.72,s:.16,k:'sloper',c:'green'});
-hold({fx:.63,fy:.81,s:.12,k:'foot',c:'green'});
-
-// ---- BLUE route (top brain-holds + centre + right diagonal) ----
-hold({fx:.225,fy:.13,s:.14,k:'sloper',c:'blue'});
-hold({fx:.245,fy:.30,s:.15,k:'jug',c:'blue'});
-hold({fx:.40,fy:.42,s:.15,k:'sloper',c:'blue'});
-hold({fx:.385,fy:.50,s:.14,k:'pinch',c:'blue'});
-hold({fx:.425,fy:.57,s:.14,k:'jug',c:'blue'});
-hold({fx:.63,fy:.44,s:.15,k:'sloper',c:'blue'});
-hold({fx:.66,fy:.54,s:.15,k:'jug',c:'blue'});
-hold({fx:.685,fy:.63,s:.14,k:'sloper',c:'blue'});
-hold({fx:.705,fy:.71,s:.13,k:'pinch',c:'blue'});
-hold({fx:.60,fy:.66,s:.13,k:'crimp',c:'blue'});
-
-// ---- TAN / GREY neutral holds (open feet, wooden pinches) ----
-hold({fx:.20,fy:.30,s:.15,k:'sloper',c:'grey'});
-hold({fx:.47,fy:.28,s:.14,k:'jug',c:'tan'});
-hold({fx:.50,fy:.35,s:.13,k:'pinch',c:'tan'});
-hold({fx:.475,fy:.41,s:.13,k:'crimp',c:'tan'});
-hold({fx:.525,fy:.30,s:.13,k:'sloper',c:'grey'});
-hold({fx:.60,fy:.40,s:.14,k:'sloper',c:'grey'});
-hold({fx:.72,fy:.28,s:.14,k:'jug',c:'grey'});
-hold({fx:.755,fy:.33,s:.13,k:'sloper',c:'grey'});
-hold({fx:.43,fy:.62,s:.13,k:'pinch',c:'tan'});
-hold({fx:.55,fy:.48,s:.13,k:'crimp',c:'tan'});
-
-// ---- PURPLE (low left accents) ----
-hold({fx:.03,fy:.82,s:.13,k:'pinch',c:'purple'});
-hold({fx:.055,fy:.90,s:.12,k:'foot',c:'purple'});
-
-/* =========================================================================
-   ROUTES = colour groups.  Grade/level from the number tags on the wall.
-   ========================================================================= */
-const ROUTE_META={
-  yellow:{name:'Yellow Volumes',grade:'V4',level:2,style:'Overhang · volumes',desc:'The big split quarter-pie volumes across the prow. Tags read 3–4. Compression and big spans between the yellow blocks.'},
-  green :{name:'Green',         grade:'V3',level:2,style:'Face · slopers',   desc:'The green cluster up the left flank into the lower-centre. Tag reads 3.'},
-  blue  :{name:'Blue',          grade:'V2',level:1,style:'Vertical · jugs',  desc:'Blue holds from the brain slopers up top down the centre and out the right diagonal.'},
-  grey  :{name:'Grey',          grade:'V2',level:1,style:'Open · pinches',   desc:'Grey slopers scattered through the middle of the panel — open feet on everything else.'},
-  tan   :{name:'Wood / Tan',    grade:'V1',level:1,style:'Warm-up · jugs',   desc:'The wooden/tan holds — an easy warm-up line up the centre of the prow.'},
-  purple:{name:'Purple',        grade:'V0',level:1,style:'Intro · low',      desc:'Low purple holds on the far left. Kids / intro moves.'},
-};
-const ORDER=['yellow','green','blue','grey','tan','purple'];
-const ROUTES=ORDER.filter(c=>allHolds.some(h=>h.userData.colorName===c)).map(c=>{
-  const holds=allHolds.filter(h=>h.userData.colorName===c).map(h=>h.userData.id);
-  return {id:c,color:COL[c],holds,...ROUTE_META[c]};
+const RING=ringTex();
+const holds=[]; // {fx,fy,color, colorName, sprite, pos}
+HOLDS.forEach(([fx,fy,cn,s])=>{
+  const p=surf(fx,fy); p.z+=0.08;
+  const sp=new R.Sprite(new R.SpriteMaterial({map:RING,color:COL[cn],transparent:true,opacity:0,depthTest:false,depthWrite:false}));
+  const sz=0.34+s*0.55; sp.scale.set(sz,sz,sz); sp.position.copy(p); sp.renderOrder=2; scene.add(sp);
+  holds.push({fx,fy,colorName:cn,sprite:sp,pos:p});
 });
+
+/* =========================================================================
+   ROUTES = colour groups.  Grade/level from the wall's number tags.
+   ========================================================================= */
+const META={
+  yellow:{name:'Yellow Volumes',grade:'V4',level:2,style:'Overhang · volumes',desc:'The big split quarter-pie volumes fanning up the prow. Tags read 3–5. Compression and long spans between the yellow blocks.'},
+  green :{name:'Green',         grade:'V3',level:2,style:'Face · slopers',   desc:'Green cluster up the left flank and the lower-centre. Tag reads 3.'},
+  blue  :{name:'Blue',          grade:'V2',level:1,style:'Vertical · jugs',  desc:'Blue holds from the top-left down the centre and out the right diagonal. Tag reads 4.'},
+  grey  :{name:'Grey / Wood',   grade:'V1',level:1,style:'Open · pinches',   desc:'The neutral grey and wooden holds through the middle — an easy line, open feet on everything.'},
+  purple:{name:'Purple',        grade:'V0',level:1,style:'Intro · low',      desc:'Low purple hold on the far left. Intro moves.'},
+};
+const ORDER=['yellow','green','blue','grey','purple'];
+const ROUTES=ORDER.filter(c=>holds.some(h=>h.colorName===c)).map(c=>({
+  id:c,color:COL[c],count:holds.filter(h=>h.colorName===c).length,...META[c]}));
 const byRoute=Object.fromEntries(ROUTES.map(r=>[r.id,r]));
 
 /* =========================================================================
-   INTERACTION
+   VIEW STATE
    ========================================================================= */
-let active=null;
+let active=null, showAll=false;
 function applyView(){
-  const set=active?new Set(byRoute[active].holds):null;
-  allHolds.forEach(h=>{const u=h.userData;
-    if(!set){u.mat.opacity=1;u.mat.transparent=false;u.mat.emissiveIntensity=0;u.mat.color.setHex(u.baseColor);}
-    else if(set.has(u.id)){u.mat.opacity=1;u.mat.transparent=false;u.mat.emissiveIntensity=.5;u.mat.color.setHex(u.baseColor);}
-    else{u.mat.transparent=true;u.mat.opacity=.12;u.mat.emissiveIntensity=0;u.mat.color.setHex(0x2b2f36);}});
+  const dim = active||showAll;
+  targetWallColor = dim?0x555a60:0xffffff;
+  holds.forEach(h=>{
+    let op=0;
+    if(active) op = (h.colorName===active)?1:0;
+    else if(showAll) op=0.9;
+    h.sprite.userData.targetOp=op;
+  });
 }
+let targetWallColor=0xffffff;
 function select(id){
-  active=(active===id)?null:id; applyView();
+  active=(active===id)?null:id; if(active) showAll=false; applyView();
   document.querySelectorAll('.route').forEach(el=>el.classList.toggle('active',el.dataset.id===active));
+  document.getElementById('btnAll').classList.toggle('on',showAll);
   const d=document.getElementById('detail');
   if(active){const r=byRoute[active];d.classList.add('show');
     d.querySelector('.swatch').style.background='#'+r.color.toString(16).padStart(6,'0');
     d.querySelector('.nm').textContent=r.name; d.querySelector('.grade').textContent=r.grade;
     d.querySelector('[data-level]').textContent=['','Beginner','Intermediate','Advanced'][r.level];
-    d.querySelector('[data-holds]').textContent=r.holds.length;
+    d.querySelector('[data-holds]').textContent=r.count;
     d.querySelector('[data-style]').textContent=r.style.split(' · ')[0];
     d.querySelector('[data-desc]').textContent=r.desc;
   } else d.classList.remove('show');
 }
+
+/* click a hold on the wall → select its route */
 const ray=new R.Raycaster(),mouse=new R.Vector2(); let downXY=null;
 renderer.domElement.addEventListener('pointerdown',e=>downXY=[e.clientX,e.clientY]);
 renderer.domElement.addEventListener('pointerup',e=>{if(!downXY)return;
   if(Math.hypot(e.clientX-downXY[0],e.clientY-downXY[1])>6)return;
   mouse.x=(e.clientX/innerWidth)*2-1;mouse.y=-(e.clientY/innerHeight)*2+1;ray.setFromCamera(mouse,camera);
-  const hit=ray.intersectObjects(allHolds,false)[0];
-  if(hit)select(hit.object.userData.colorName);});
+  const hit=ray.intersectObject(wall,false)[0]; if(!hit||!hit.uv)return;
+  const fx=hit.uv.x, fy=1-hit.uv.y; let best=null,bd=0.05;
+  holds.forEach(h=>{const d=Math.hypot(h.fx-fx,h.fy-fy);if(d<bd){bd=d;best=h;}});
+  if(best)select(best.colorName);});
 
 /* sidebar */
 const listEl=document.getElementById('list');
 ROUTES.forEach(r=>{const el=document.createElement('div');el.className='route';el.dataset.id=r.id;
   el.innerHTML=`<span class="swatch" style="background:#${r.color.toString(16).padStart(6,'0')}"></span>
     <div class="meta"><div class="nm">${r.name}</div>
-    <div class="sub">${['','Beginner','Intermediate','Advanced'][r.level]} · ${r.holds.length} holds</div></div>
+    <div class="sub">${['','Beginner','Intermediate','Advanced'][r.level]} · ${r.count} holds</div></div>
     <span class="grade">${r.grade}</span>`;
   el.onclick=()=>select(r.id); listEl.appendChild(el);});
-
-document.getElementById('btnAll').onclick=()=>{if(active)select(active);tweenCam(HOME.pos);tweenTarget(HOME.tgt);};
 document.getElementById('btnReset').onclick=()=>{tweenCam(HOME.pos);tweenTarget(HOME.tgt);};
-let labelsOn=false;
-document.getElementById('btnLabels').onclick=e=>{labelsOn=!labelsOn;tagSprites.forEach(s=>s.visible=labelsOn);e.currentTarget.classList.toggle('on',labelsOn);};
+document.getElementById('btnAll').onclick=e=>{active=null;showAll=!showAll;applyView();
+  document.querySelectorAll('.route').forEach(el=>el.classList.remove('active'));
+  document.getElementById('detail').classList.remove('show');
+  e.currentTarget.classList.toggle('on',showAll);};
 
 /* tweens + loop */
 let camTween=null,tgtTween=null;
 function tweenCam(to){camTween={from:camera.position.clone(),to:to.clone(),t:0};}
 function tweenTarget(to){tgtTween={from:controls.target.clone(),to:to.clone(),t:0};}
 const ease=t=>t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
-let last=performance.now();
-function loop(now){const dt=Math.min((now-last)/1000,.05);last=now;
+const _c1=new R.Color(),_c2=new R.Color();
+let last=performance.now(), pulse=0;
+function loop(now){const dt=Math.min((now-last)/1000,.05);last=now; pulse+=dt;
   if(camTween){camTween.t=Math.min(camTween.t+dt/.9,1);camera.position.lerpVectors(camTween.from,camTween.to,ease(camTween.t));if(camTween.t>=1)camTween=null;}
   if(tgtTween){tgtTween.t=Math.min(tgtTween.t+dt/.9,1);controls.target.lerpVectors(tgtTween.from,tgtTween.to,ease(tgtTween.t));if(tgtTween.t>=1)tgtTween=null;}
+  // wall colour dim tween
+  _c1.copy(wallMat.color); _c2.setHex(targetWallColor); wallMat.color.copy(_c1.lerp(_c2,0.12));
+  // ring opacity + subtle pulse
+  const pf=0.82+0.18*Math.sin(pulse*3.5);
+  holds.forEach(h=>{const m=h.sprite.material;const t=h.sprite.userData.targetOp||0;
+    m.opacity+=(t-m.opacity)*0.15; m.opacity=Math.max(0,m.opacity);
+    const base=0.34+0.55*0.4; const on=(active&&h.colorName===active);
+    h.sprite.material.rotation=0;});
   controls.update();renderer.render(scene,camera);requestAnimationFrame(loop);}
 applyView();requestAnimationFrame(loop);
-document.getElementById('loading').style.display='none';
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
 </script>
 </body>
