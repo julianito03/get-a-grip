@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+<title>Get a Grip — Photoreal Capture</title>
+<style>
+  :root{--bg:#08090c;--panel2:#1c2027;--line:#2a2f38;--ink:#f2f4f7;--muted:#8b93a1;--accent:#ffd21e;
+    --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:var(--font);overflow:hidden}
+  #app{position:fixed;inset:0} canvas{display:block}
+  #ui{position:absolute;top:0;left:0;height:100%;width:316px;
+    background:linear-gradient(180deg,rgba(20,23,28,.92),rgba(8,9,12,.92));
+    border-right:1px solid var(--line);display:flex;flex-direction:column;backdrop-filter:blur(8px);z-index:10}
+  .brand{padding:20px 20px 14px;border-bottom:1px solid var(--line)}
+  .brand h1{margin:0;font-size:19px;letter-spacing:.02em;font-weight:800;display:flex;align-items:center;gap:9px}
+  .brand h1 .dot{width:11px;height:11px;border-radius:3px;background:var(--accent);box-shadow:0 0 12px var(--accent)}
+  .brand p{margin:5px 0 0;font-size:12px;color:var(--muted)}
+  .tag{display:inline-block;margin-top:8px;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#0b0d10;background:var(--accent);padding:3px 8px;border-radius:5px;font-weight:700}
+  .sect{padding:12px 18px 2px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  .list{flex:1;overflow-y:auto;padding:2px 12px 20px}
+  .route{display:flex;align-items:center;gap:12px;padding:11px 12px;margin:6px 0;border-radius:10px;
+    background:var(--panel2);border:1px solid var(--line);cursor:pointer;transition:.15s}
+  .route:hover{border-color:#3a414c;transform:translateX(2px)}
+  .route.active{border-color:var(--accent);background:#20242c;box-shadow:0 0 0 1px var(--accent) inset}
+  .route .swatch{width:16px;height:16px;border-radius:5px;flex:0 0 auto;box-shadow:0 0 0 2px rgba(255,255,255,.08)}
+  .route .meta{flex:1;min-width:0}
+  .route .meta .nm{font-size:14px;font-weight:600}
+  .route .meta .sub{font-size:11.5px;color:var(--muted);margin-top:2px}
+  .hint{padding:12px 20px;border-top:1px solid var(--line);font-size:11.5px;color:var(--muted);line-height:1.5}
+  #topbar{position:absolute;top:14px;right:14px;display:flex;gap:8px;z-index:10}
+  #topbar button{padding:9px 14px;font-size:12.5px;font-weight:600;color:var(--ink);background:rgba(28,32,39,.9);
+    border:1px solid var(--line);border-radius:9px;cursor:pointer;backdrop-filter:blur(6px)}
+  #topbar button:hover{border-color:#3a414c}
+  #topbar button.on{border-color:var(--accent);color:var(--accent)}
+  #status{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:40;text-align:center;color:var(--muted);font-size:14px}
+  #status .bar{width:220px;height:4px;background:#20242c;border-radius:3px;margin:14px auto 0;overflow:hidden}
+  #status .bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .2s}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="status">Loading photoreal capture…<div class="bar"><i id="pbar"></i></div></div>
+
+<div id="ui">
+  <div class="brand"><h1><span class="dot"></span>GET A GRIP</h1><p>The Cave · photoreal capture</p><span class="tag">Gaussian splat</span></div>
+  <div class="sect">Routes</div>
+  <div class="list" id="list"></div>
+  <div class="hint">Reconstructed in 3D from the wall video. Drag to orbit · scroll to zoom · click a route to highlight its holds.</div>
+</div>
+<div id="topbar">
+  <button id="btnReset">Reset view</button>
+  <button id="btnMarks" class="on">Markers</button>
+</div>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/",
+  "@mkkellogg/gaussian-splats-3d": "https://unpkg.com/@mkkellogg/gaussian-splats-3d@0.4.7/build/gaussian-splats-3d.module.js"
+}}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import * as GS from '@mkkellogg/gaussian-splats-3d';
+
+const app=document.getElementById('app');
+const renderer=new THREE.WebGLRenderer({antialias:false});
+renderer.setPixelRatio(Math.min(devicePixelRatio,1.5)); renderer.setSize(innerWidth,innerHeight);
+app.appendChild(renderer.domElement);
+const scene=new THREE.Scene();
+const camera=new THREE.PerspectiveCamera(55,innerWidth/innerHeight,0.05,500);
+camera.position.set(0,0,-4);
+const controls=new OrbitControls(camera,renderer.domElement);
+controls.enableDamping=true; controls.dampingFactor=.08;
+
+// Gaussian splat renderer sharing our three scene/camera/renderer (no SharedArrayBuffer → works on GitHub Pages)
+const viewer=new GS.DropInViewer({
+  gpuAcceleratedSort:false, sharedMemoryForWorkers:false, progressiveLoad:false
+});
+scene.add(viewer);
+
+let routes=[], markers=[], byId={}, active=null, marksOn=true, HOME=null;
+const pbar=document.getElementById('pbar');
+
+viewer.addSplatScene('wall.ply', {
+  splatAlphaRemovalThreshold:5, showLoadingUI:false,
+  onProgress:(p)=>{ pbar.style.width=Math.min(100,p||0)+'%'; }
+}).then(async ()=>{
+  document.getElementById('status').style.display='none';
+  await loadRoutes();
+  if(!HOME) fitCamera();
+  animate();
+}).catch(e=>{ document.getElementById('status').innerHTML='Could not load capture.<br><small>'+e+'</small>'; });
+
+function setView(v){
+  camera.up.set(v.up[0],v.up[1],v.up[2]);
+  camera.position.set(v.pos[0],v.pos[1],v.pos[2]);
+  controls.target.set(v.target[0],v.target[1],v.target[2]);
+  const dist=camera.position.distanceTo(controls.target);
+  camera.near=dist/200; camera.far=dist*20; camera.updateProjectionMatrix();
+  HOME={pos:camera.position.clone(),tgt:controls.target.clone(),up:camera.up.clone()};
+  controls.update();
+}
+
+function bounds(){
+  const box=new THREE.Box3().setFromObject(viewer);
+  return box.isEmpty()? null : box;
+}
+function fitCamera(){
+  const box=bounds(); if(!box) return;
+  const c=box.getCenter(new THREE.Vector3()), s=box.getSize(new THREE.Vector3());
+  const r=Math.max(s.x,s.y,s.z);
+  HOME={tgt:c.clone(), pos:c.clone().add(new THREE.Vector3(0,0.1*r,-1.4*r))};
+  camera.position.copy(HOME.pos); controls.target.copy(HOME.tgt);
+  camera.near=r/100; camera.far=r*20; camera.updateProjectionMatrix();
+}
+
+/* ---- routes: centroids + colour, generated from the trained splat ---- */
+async function loadRoutes(){
+  try{
+    const res=await fetch('routes.json'); if(!res.ok) return;
+    const data=await res.json(); routes=data.routes||[];
+    if(data.view) setView(data.view);
+  }catch(e){ return; }
+  const ring=ringTex();
+  const listEl=document.getElementById('list');
+  routes.forEach(r=>{
+    r.holds.forEach(h=>{
+      const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:ring,color:r.color,transparent:true,opacity:.0,depthTest:false,depthWrite:false}));
+      const sz=(h.s||0.12); sp.scale.set(sz,sz,sz); sp.position.set(h.x,h.y,h.z); sp.renderOrder=3;
+      sp.userData={routeId:r.id}; viewer.add(sp); markers.push(sp);
+    });
+    const el=document.createElement('div'); el.className='route'; el.dataset.id=r.id;
+    el.innerHTML=`<span class="swatch" style="background:#${(r.color).toString(16).padStart(6,'0')}"></span>
+      <div class="meta"><div class="nm">${r.name}</div><div class="sub">${r.holds.length} holds</div></div>`;
+    el.onclick=()=>select(r.id); listEl.appendChild(el);
+  });
+  applyMarks();
+}
+function ringTex(){const c=document.createElement('canvas');c.width=c.height=128;const x=c.getContext('2d');
+  x.strokeStyle='#fff';x.lineWidth=10;x.beginPath();x.arc(64,64,44,0,7);x.stroke();
+  x.shadowColor='#fff';x.shadowBlur=12;x.stroke();
+  const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;return t;}
+function applyMarks(){ markers.forEach(m=>{ const on=marksOn&&(active===null||m.userData.routeId===active);
+  m.material.opacity=on?(active===m.userData.routeId?1:(active?0:.5)):0; }); }
+function select(id){ active=(active===id)?null:id;
+  document.querySelectorAll('.route').forEach(el=>el.classList.toggle('active',el.dataset.id===active));
+  applyMarks(); }
+
+document.getElementById('btnReset').onclick=()=>{ if(HOME){camera.position.copy(HOME.pos);controls.target.copy(HOME.tgt);if(HOME.up)camera.up.copy(HOME.up);controls.update();} };
+document.getElementById('btnMarks').onclick=e=>{marksOn=!marksOn;e.currentTarget.classList.toggle('on',marksOn);applyMarks();};
+
+function animate(){ requestAnimationFrame(animate); controls.update(); renderer.render(scene,camera); }
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
+</script>
+</body>
+</html>

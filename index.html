@@ -3,158 +3,315 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
-<title>Get a Grip — Photoreal Capture</title>
+<title>Get a Grip — 3D Model</title>
 <style>
-  :root{--bg:#08090c;--panel2:#1c2027;--line:#2a2f38;--ink:#f2f4f7;--muted:#8b93a1;--accent:#ffd21e;
+  :root{--bg:#eceef1;--panel:#ffffff;--panel2:#f4f6f8;--line:#e0e3e8;--ink:#1c1f24;--muted:#6b7280;--accent:#f2b705;
     --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
   *{box-sizing:border-box}
   html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:var(--font);overflow:hidden}
   #app{position:fixed;inset:0} canvas{display:block}
-  #ui{position:absolute;top:0;left:0;height:100%;width:316px;
-    background:linear-gradient(180deg,rgba(20,23,28,.92),rgba(8,9,12,.92));
-    border-right:1px solid var(--line);display:flex;flex-direction:column;backdrop-filter:blur(8px);z-index:10}
+  #ui{position:absolute;top:0;left:0;height:100%;width:314px;
+    background:rgba(255,255,255,.86);border-right:1px solid var(--line);display:flex;flex-direction:column;backdrop-filter:blur(10px);z-index:10}
   .brand{padding:20px 20px 14px;border-bottom:1px solid var(--line)}
   .brand h1{margin:0;font-size:19px;letter-spacing:.02em;font-weight:800;display:flex;align-items:center;gap:9px}
-  .brand h1 .dot{width:11px;height:11px;border-radius:3px;background:var(--accent);box-shadow:0 0 12px var(--accent)}
+  .brand h1 .dot{width:11px;height:11px;border-radius:3px;background:var(--accent)}
   .brand p{margin:5px 0 0;font-size:12px;color:var(--muted)}
-  .tag{display:inline-block;margin-top:8px;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#0b0d10;background:var(--accent);padding:3px 8px;border-radius:5px;font-weight:700}
   .sect{padding:12px 18px 2px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
   .list{flex:1;overflow-y:auto;padding:2px 12px 20px}
   .route{display:flex;align-items:center;gap:12px;padding:11px 12px;margin:6px 0;border-radius:10px;
     background:var(--panel2);border:1px solid var(--line);cursor:pointer;transition:.15s}
-  .route:hover{border-color:#3a414c;transform:translateX(2px)}
-  .route.active{border-color:var(--accent);background:#20242c;box-shadow:0 0 0 1px var(--accent) inset}
-  .route .swatch{width:16px;height:16px;border-radius:5px;flex:0 0 auto;box-shadow:0 0 0 2px rgba(255,255,255,.08)}
+  .route:hover{border-color:#cfd4db;transform:translateX(2px)}
+  .route.active{border-color:var(--accent);background:#fff8e6;box-shadow:0 0 0 1px var(--accent) inset}
+  .route .swatch{width:16px;height:16px;border-radius:5px;flex:0 0 auto;box-shadow:0 0 0 2px rgba(0,0,0,.06)}
   .route .meta{flex:1;min-width:0}
   .route .meta .nm{font-size:14px;font-weight:600}
   .route .meta .sub{font-size:11.5px;color:var(--muted);margin-top:2px}
+  .route .grade{font-size:12px;font-weight:800;padding:3px 8px;border-radius:6px;background:#1c1f24;color:#fff}
   .hint{padding:12px 20px;border-top:1px solid var(--line);font-size:11.5px;color:var(--muted);line-height:1.5}
+  .hint a{color:var(--muted)}
   #topbar{position:absolute;top:14px;right:14px;display:flex;gap:8px;z-index:10}
-  #topbar button{padding:9px 14px;font-size:12.5px;font-weight:600;color:var(--ink);background:rgba(28,32,39,.9);
+  #topbar button{padding:9px 14px;font-size:12.5px;font-weight:600;color:var(--ink);background:rgba(255,255,255,.9);
     border:1px solid var(--line);border-radius:9px;cursor:pointer;backdrop-filter:blur(6px)}
-  #topbar button:hover{border-color:#3a414c}
-  #topbar button.on{border-color:var(--accent);color:var(--accent)}
-  #status{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:40;text-align:center;color:var(--muted);font-size:14px}
-  #status .bar{width:220px;height:4px;background:#20242c;border-radius:3px;margin:14px auto 0;overflow:hidden}
-  #status .bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .2s}
+  #topbar button:hover{border-color:#cfd4db}
+  #topbar button.on{border-color:var(--accent);color:#9a7400}
+  #detail{position:absolute;bottom:16px;right:16px;width:280px;padding:16px 18px;z-index:10;
+    background:rgba(255,255,255,.94);border:1px solid var(--line);border-radius:14px;backdrop-filter:blur(8px);
+    box-shadow:0 10px 30px rgba(0,0,0,.08);transform:translateY(150%);transition:transform .28s cubic-bezier(.2,.8,.2,1)}
+  #detail.show{transform:translateY(0)}
+  #detail .dh{display:flex;align-items:center;gap:10px}
+  #detail .dh .swatch{width:18px;height:18px;border-radius:6px}
+  #detail .dh .nm{font-size:16px;font-weight:700;flex:1}
+  #detail .dh .grade{font-size:13px;font-weight:800;color:#9a7400}
+  #detail .drow{display:flex;gap:18px;margin-top:12px}
+  #detail .drow div .k{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+  #detail .drow div .v{font-size:15px;font-weight:600;margin-top:2px}
+  #detail .setter{font-size:12px;color:var(--muted);margin-top:12px;line-height:1.5}
+  #loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:var(--bg);z-index:50;color:var(--muted);font-size:14px}
+  @media(max-width:720px){#ui{width:100%;height:auto;max-height:42%;bottom:0;top:auto;border-right:none;border-top:1px solid var(--line)}#detail{display:none}}
 </style>
 </head>
 <body>
 <div id="app"></div>
-<div id="status">Loading photoreal capture…<div class="bar"><i id="pbar"></i></div></div>
+<div id="loading">Building model…</div>
 
 <div id="ui">
-  <div class="brand"><h1><span class="dot"></span>GET A GRIP</h1><p>The Cave · photoreal capture</p><span class="tag">Gaussian splat</span></div>
+  <div class="brand"><h1><span class="dot"></span>GET A GRIP</h1><p>Prow wall · accurate 3D model</p></div>
   <div class="sect">Routes</div>
   <div class="list" id="list"></div>
-  <div class="hint">Reconstructed in 3D from the wall video. Drag to orbit · scroll to zoom · click a route to highlight its holds.</div>
+  <div class="hint">Every hold modelled 1:1. Drag to orbit · scroll to zoom · click a route or a hold to isolate it. · <a href="splat.html">photoreal scan ›</a></div>
 </div>
 <div id="topbar">
-  <button id="btnReset">Reset view</button>
-  <button id="btnMarks" class="on">Markers</button>
+  <button id="btnReset">Reset</button>
+  <button id="btnAll">Show all</button>
+</div>
+<div id="detail">
+  <div class="dh"><span class="swatch"></span><span class="nm"></span><span class="grade"></span></div>
+  <div class="drow">
+    <div><div class="k">Level</div><div class="v" data-level></div></div>
+    <div><div class="k">Holds</div><div class="v" data-holds></div></div>
+    <div><div class="k">Style</div><div class="v" data-style></div></div>
+  </div>
+  <div class="setter" data-desc></div>
 </div>
 
 <script type="importmap">
 { "imports": {
   "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-  "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/",
-  "@mkkellogg/gaussian-splats-3d": "https://unpkg.com/@mkkellogg/gaussian-splats-3d@0.4.7/build/gaussian-splats-3d.module.js"
+  "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
 }}
 </script>
 
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import * as GS from '@mkkellogg/gaussian-splats-3d';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+const R=THREE, PI=Math.PI, rnd=(a,b)=>a+Math.random()*(b-a);
 
-const app=document.getElementById('app');
-const renderer=new THREE.WebGLRenderer({antialias:false});
-renderer.setPixelRatio(Math.min(devicePixelRatio,1.5)); renderer.setSize(innerWidth,innerHeight);
-app.appendChild(renderer.domElement);
-const scene=new THREE.Scene();
-const camera=new THREE.PerspectiveCamera(55,innerWidth/innerHeight,0.05,500);
-camera.position.set(0,0,-4);
+/* =========================================================================
+   GET A GRIP — clean, geometrically-accurate 3D model of the PROW wall.
+   Faceted solid panel + every hold modelled as its real shape, placed 1:1
+   from the photo (fx,fy fractions). Studio-lit product-render aesthetic.
+   ========================================================================= */
+const scene=new R.Scene(); scene.background=new R.Color(0xeceef1);
+const renderer=new R.WebGLRenderer({antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2)); renderer.setSize(innerWidth,innerHeight);
+renderer.shadowMap.enabled=true; renderer.shadowMap.type=R.PCFSoftShadowMap;
+renderer.toneMapping=R.ACESFilmicToneMapping; renderer.toneMappingExposure=1.0;
+document.getElementById('app').appendChild(renderer.domElement);
+const pmrem=new R.PMREMGenerator(renderer);
+scene.environment=pmrem.fromScene(new RoomEnvironment(),0.03).texture;
+
+const camera=new R.PerspectiveCamera(42,innerWidth/innerHeight,0.1,200);
+const HOME={pos:new R.Vector3(8.4,5.6,11),tgt:new R.Vector3(0.3,2.9,0.4)};
+camera.position.copy(HOME.pos);
 const controls=new OrbitControls(camera,renderer.domElement);
-controls.enableDamping=true; controls.dampingFactor=.08;
+controls.enableDamping=true; controls.dampingFactor=.08; controls.target.copy(HOME.tgt);
+controls.minDistance=6; controls.maxDistance=26; controls.maxPolarAngle=PI*0.52;
 
-// Gaussian splat renderer sharing our three scene/camera/renderer (no SharedArrayBuffer → works on GitHub Pages)
-const viewer=new GS.DropInViewer({
-  gpuAcceleratedSort:false, sharedMemoryForWorkers:false, progressiveLoad:false
-});
-scene.add(viewer);
+/* studio lighting */
+scene.add(new R.HemisphereLight(0xffffff,0x97a0af,1.0));
+const key=new R.DirectionalLight(0xfff4e2,2.2); key.position.set(-6,11,9); key.castShadow=true;
+key.shadow.mapSize.set(2048,2048); key.shadow.camera.near=2; key.shadow.camera.far=40;
+key.shadow.camera.left=-12; key.shadow.camera.right=12; key.shadow.camera.top=12; key.shadow.camera.bottom=-4;
+key.shadow.bias=-0.0002; key.shadow.normalBias=0.02; scene.add(key);
+const fill=new R.DirectionalLight(0xeaf0ff,1.3); fill.position.set(5,4,13); scene.add(fill);   // front fill lights the face
+const fill2=new R.DirectionalLight(0xfff0dd,.8); fill2.position.set(11,6,4); scene.add(fill2);  // right rim
 
-let routes=[], markers=[], byId={}, active=null, marksOn=true, HOME=null;
-const pbar=document.getElementById('pbar');
+/* ground */
+const ground=new R.Mesh(new R.PlaneGeometry(60,60),new R.MeshStandardMaterial({color:0xe4e7eb,roughness:.95,metalness:0}));
+ground.rotation.x=-PI/2; ground.receiveShadow=true; scene.add(ground);
 
-viewer.addSplatScene('wall.ply', {
-  splatAlphaRemovalThreshold:5, showLoadingUI:false,
-  onProgress:(p)=>{ pbar.style.width=Math.min(100,p||0)+'%'; }
-}).then(async ()=>{
-  document.getElementById('status').style.display='none';
-  await loadRoutes();
-  if(!HOME) fitCamera();
-  animate();
-}).catch(e=>{ document.getElementById('status').innerHTML='Could not load capture.<br><small>'+e+'</small>'; });
+/* =========================================================================
+   PROW GEOMETRY — displaced solid panel (faceted).
+   ========================================================================= */
+const W=9.2, H=6.7, THICK=0.9;
+function clamp(x,a,b){return Math.max(a,Math.min(b,x));}
+function sstep(a,b,x){x=clamp((x-a)/(b-a),0,1);return x*x*(3-2*x);}
+function zProw(fx,fy){                       // depth: central arête bulges out, right wing folds back
+  const ridge=Math.exp(-Math.pow((fx-0.50)/0.24,2));
+  let z=1.85*ridge;
+  z-=1.3*sstep(0.70,1.0,fx);
+  z-=0.6*sstep(0.34,0.0,fx);
+  z+=0.2*(1-fy);
+  return z;
+}
+const surf=(fx,fy)=>new R.Vector3((fx-0.5)*W,(1-fy)*H,zProw(fx,fy));
+const _a=new R.Vector3(),_b=new R.Vector3(),_c=new R.Vector3(),_du=new R.Vector3(),_dv=new R.Vector3();
+function normalAt(fx,fy,out=new R.Vector3()){
+  const e=0.004; const a=surf(fx,fy),b=surf(Math.min(fx+e,1),fy),c=surf(fx,Math.min(fy+e,1));
+  _du.subVectors(b,a); _dv.subVectors(c,a); out.crossVectors(_dv,_du).normalize(); if(out.z<0)out.multiplyScalar(-1); return out;
+}
+// solid faceted slab: displaced front + flat back + border skirt
+function buildWall(nu,nv){
+  const F=[],B=[]; let minz=1e9;
+  for(let j=0;j<=nv;j++){F[j]=[];B[j]=[];for(let i=0;i<=nu;i++){const p=surf(i/nu,j/nv);F[j][i]=p;minz=Math.min(minz,p.z);}}
+  const backZ=minz-THICK;
+  const pos=[],idx=[]; const push=v=>{pos.push(v.x,v.y,v.z);return pos.length/3-1;};
+  const Fi=[],Bi=[];
+  for(let j=0;j<=nv;j++){Fi[j]=[];Bi[j]=[];for(let i=0;i<=nu;i++){Fi[j][i]=push(F[j][i]);Bi[j][i]=push(new R.Vector3(F[j][i].x,F[j][i].y,backZ));}}
+  for(let j=0;j<nv;j++)for(let i=0;i<nu;i++){
+    idx.push(Fi[j][i],Fi[j+1][i],Fi[j][i+1], Fi[j][i+1],Fi[j+1][i],Fi[j+1][i+1]);   // front
+    idx.push(Bi[j][i],Bi[j][i+1],Bi[j+1][i], Bi[j][i+1],Bi[j+1][i+1],Bi[j+1][i]);   // back
+  }
+  for(let i=0;i<nu;i++){ // top & bottom skirts
+    idx.push(Fi[0][i],Fi[0][i+1],Bi[0][i], Fi[0][i+1],Bi[0][i+1],Bi[0][i]);
+    idx.push(Fi[nv][i],Bi[nv][i],Fi[nv][i+1], Fi[nv][i+1],Bi[nv][i],Bi[nv][i+1]);
+  }
+  for(let j=0;j<nv;j++){ // left & right skirts
+    idx.push(Fi[j][0],Bi[j][0],Fi[j+1][0], Fi[j+1][0],Bi[j][0],Bi[j+1][0]);
+    idx.push(Fi[j][nu],Fi[j+1][nu],Bi[j][nu], Fi[j+1][nu],Bi[j+1][nu],Bi[j][nu]);
+  }
+  const g=new R.BufferGeometry(); g.setAttribute('position',new R.Float32BufferAttribute(pos,3)); g.setIndex(idx); g.computeVertexNormals(); return g;
+}
+function wallTex(){
+  const c=document.createElement('canvas');c.width=c.height=1024;const x=c.getContext('2d');
+  x.fillStyle='#4c5058';x.fillRect(0,0,1024,1024);
+  for(let i=0;i<300;i++){x.globalAlpha=rnd(.03,.08);x.fillStyle=Math.random()<.5?'#5c616a':'#3c4046';x.beginPath();x.arc(rnd(0,1024),rnd(0,1024),rnd(8,34),0,7);x.fill();}
+  x.globalAlpha=1;x.fillStyle='#33363c';
+  for(let gy=44;gy<1024;gy+=58)for(let gx=40;gx<1024;gx+=58){x.beginPath();x.arc(gx+((gy/58|0)%2)*29,gy,3,0,7);x.fill();}
+  const t=new R.CanvasTexture(c);t.colorSpace=R.SRGBColorSpace;t.wrapS=t.wrapT=R.RepeatWrapping;t.repeat.set(4,3);return t;
+}
+const wall=new R.Mesh(buildWall(12,9), new R.MeshStandardMaterial({map:wallTex(),color:0x626772,roughness:.85,metalness:.02,flatShading:true,envMapIntensity:.7}));
+wall.castShadow=true; wall.receiveShadow=true; wall.position.y=0.0; scene.add(wall);
 
-function setView(v){
-  camera.up.set(v.up[0],v.up[1],v.up[2]);
-  camera.position.set(v.pos[0],v.pos[1],v.pos[2]);
-  controls.target.set(v.target[0],v.target[1],v.target[2]);
-  const dist=camera.position.distanceTo(controls.target);
-  camera.near=dist/200; camera.far=dist*20; camera.updateProjectionMatrix();
-  HOME={pos:camera.position.clone(),tgt:controls.target.clone(),up:camera.up.clone()};
-  controls.update();
+/* =========================================================================
+   HOLDS — each modelled as its real shape, placed 1:1 (fx,fy).
+   ========================================================================= */
+const COL={yellow:0xf1c40f,green:0x5bbf3f,blue:0x3f7ec4,grey:0x9a938a,tan:0xc4b48f,purple:0x8f5bb0,pink:0xcf6a8a};
+const geoC={};
+function jit(g,a){const p=g.attributes.position;for(let i=0;i<p.count;i++)p.setXYZ(i,p.getX(i)*(1+rnd(-a,a)),p.getY(i)*(1+rnd(-a,a)),p.getZ(i)*(1+rnd(-a,a)));g.computeVertexNormals();return g;}
+function baseGeo(kind){
+  if(geoC[kind])return geoC[kind]; let g;
+  switch(kind){
+    case 'dome':   g=new R.SphereGeometry(1,24,16,0,PI*2,0,PI/2); g.scale(1,.62,1); break;      // round sloper
+    case 'jug':    g=jit(new R.SphereGeometry(1,18,14),.12); g.scale(1,.66,.72); break;
+    case 'sloper': g=jit(new R.SphereGeometry(1,20,14,0,PI*2,0,PI/2),.06); g.scale(1,.5,.9); break;
+    case 'crimp':  g=jit(new R.SphereGeometry(1,16,10),.05); g.scale(1,.3,.44); break;
+    case 'pinch':  g=jit(new R.SphereGeometry(1,16,14),.1); g.scale(.6,.9,.55); break;
+    case 'foot':   g=jit(new R.IcosahedronGeometry(1,0),.12); g.scale(.8,.62,.55); break;
+    case 'pear':   g=jit(new R.SphereGeometry(1,18,14),.06); g.scale(.7,1.05,.55); break;        // teardrop
+    case 'tri':    g=new R.ConeGeometry(1,1.5,3); break;                                          // triangular pyramid volume
+  }
+  geoC[kind]=g; return g;
+}
+// quarter-pie volume (yellow): beveled quarter disc, slightly domed
+function pieGeo(){ if(geoC.pie)return geoC.pie; const g=new R.CylinderGeometry(0.62,0.92,0.62,28,1,false,0,PI/2); g.rotateX(PI/2); geoC.pie=g; return g; }
+
+const _q=new R.Quaternion(),_n=new R.Vector3(),_zaxis=new R.Vector3(0,0,1);
+const allHolds=[]; let HID=0;
+function orient(m,fx,fy,spin){ normalAt(fx,fy,_n); _q.setFromUnitVectors(_zaxis,_n); m.quaternion.copy(_q); if(spin)m.rotateZ(spin); }
+function mat(cn,rough){ return new R.MeshStandardMaterial({color:COL[cn],roughness:rough,metalness:.02,envMapIntensity:.7,emissive:new R.Color(COL[cn]),emissiveIntensity:0}); }
+function node(m,cn){ m.castShadow=true; m.receiveShadow=true; scene.add(m);
+  m.userData={id:++HID,baseColor:COL[cn],colorName:cn,mat:m.material}; allHolds.push(m); return m; }
+
+function addPie(fx,fy,cn,radius,spin){
+  const m=new R.Mesh(pieGeo(),mat(cn,.5)); m.scale.setScalar(radius); const p=surf(fx,fy);
+  orient(m,fx,fy,spin); normalAt(fx,fy,_n); m.position.copy(p).addScaledVector(_n,radius*0.12); return node(m,cn);
+}
+function addHold(fx,fy,cn,kind,s,spin=0){
+  if(kind==='pie') return addPie(fx,fy,cn,s,spin);
+  if(kind==='split'){ addPie(fx,fy,cn,s,spin); addPie(fx,fy,cn,s,(spin||0)+PI/2+0.05); return; }
+  const m=new R.Mesh(baseGeo(kind),mat(cn,kind==='tri'?.55:.5)); m.scale.setScalar(s);
+  const p=surf(fx,fy); orient(m,fx,fy,spin);
+  normalAt(fx,fy,_n); m.position.copy(p).addScaledVector(_n, kind==='tri'?s*0.5:s*0.34); node(m,cn);
 }
 
-function bounds(){
-  const box=new THREE.Box3().setFromObject(viewer);
-  return box.isEmpty()? null : box;
-}
-function fitCamera(){
-  const box=bounds(); if(!box) return;
-  const c=box.getCenter(new THREE.Vector3()), s=box.getSize(new THREE.Vector3());
-  const r=Math.max(s.x,s.y,s.z);
-  HOME={tgt:c.clone(), pos:c.clone().add(new THREE.Vector3(0,0.1*r,-1.4*r))};
-  camera.position.copy(HOME.pos); controls.target.copy(HOME.tgt);
-  camera.near=r/100; camera.far=r*20; camera.updateProjectionMatrix();
-}
+/* ---- placement traced 1:1 from the prow photo (fx: L→R, fy: top→bottom) ---- */
+const P=[
+ // yellow volumes
+ [.088,.080,'yellow','dome',.42],[.385,.255,'yellow','split',.62,rad(20)],[.570,.200,'yellow','pie',.44,rad(250)],
+ [.720,.117,'yellow','pie',.46,rad(300)],[.675,.567,'yellow','split',.6,rad(-40)],[.385,.667,'yellow','split',.56,rad(15)],
+ [.880,.940,'yellow','pie',.46,rad(90)],[.825,.410,'yellow','foot',.16],[.775,.600,'yellow','foot',.14],
+ // green
+ [.180,.100,'green','sloper',.24],[.145,.190,'green','jug',.18],[.150,.223,'green','sloper',.17],
+ [.093,.453,'green','dome',.26],[.118,.493,'green','foot',.15],[.068,.823,'green','foot',.18],
+ [.180,.827,'green','sloper',.18],[.215,.860,'green','foot',.15],[.300,.673,'green','sloper',.2],
+ [.308,.727,'green','foot',.15],[.325,.767,'green','foot',.15],
+ // blue
+ [.215,.080,'blue','sloper',.16],[.230,.200,'blue','dome',.17],[.238,.313,'blue','sloper',.16],
+ [.250,.440,'blue','dome',.17],[.258,.467,'blue','foot',.14],[.395,.423,'blue','dome',.18],
+ [.405,.460,'blue','pinch',.16],[.540,.520,'blue','dome',.17],[.625,.593,'blue','dome',.18],
+ [.618,.667,'blue','sloper',.16],[.645,.720,'blue','pinch',.16],[.660,.787,'blue','dome',.16],
+ [.880,.603,'blue','dome',.17],[.895,.643,'blue','foot',.14],
+ // grey / tan
+ [.180,.200,'grey','dome',.16],[.485,.240,'tan','pear',.17],[.505,.313,'tan','pear',.16],
+ [.525,.267,'grey','dome',.15],[.550,.287,'grey','pear',.15],[.710,.073,'grey','dome',.18],
+ [.825,.327,'grey','dome',.16],[.950,.427,'tan','dome',.16],[.480,.360,'grey','pear',.15],
+ // purple
+ [.030,.823,'purple','pinch',.16],
+];
+function rad(d){return d*PI/180;}
+P.forEach(h=>addHold(h[0],h[1],h[2],h[3],h[4],h[5]||0));
 
-/* ---- routes: centroids + colour, generated from the trained splat ---- */
-async function loadRoutes(){
-  try{
-    const res=await fetch('routes.json'); if(!res.ok) return;
-    const data=await res.json(); routes=data.routes||[];
-    if(data.view) setView(data.view);
-  }catch(e){ return; }
-  const ring=ringTex();
-  const listEl=document.getElementById('list');
-  routes.forEach(r=>{
-    r.holds.forEach(h=>{
-      const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:ring,color:r.color,transparent:true,opacity:.0,depthTest:false,depthWrite:false}));
-      const sz=(h.s||0.12); sp.scale.set(sz,sz,sz); sp.position.set(h.x,h.y,h.z); sp.renderOrder=3;
-      sp.userData={routeId:r.id}; viewer.add(sp); markers.push(sp);
-    });
-    const el=document.createElement('div'); el.className='route'; el.dataset.id=r.id;
-    el.innerHTML=`<span class="swatch" style="background:#${(r.color).toString(16).padStart(6,'0')}"></span>
-      <div class="meta"><div class="nm">${r.name}</div><div class="sub">${r.holds.length} holds</div></div>`;
-    el.onclick=()=>select(r.id); listEl.appendChild(el);
-  });
-  applyMarks();
+/* =========================================================================
+   ROUTES = colour groups.
+   ========================================================================= */
+const META={
+  yellow:{name:'Yellow Volumes',grade:'V4',level:2,style:'Overhang · volumes',desc:'The split quarter-pie volumes fanning up the prow arête. Big compression moves.'},
+  green :{name:'Green',         grade:'V3',level:2,style:'Face · slopers',   desc:'Green cluster up the left flank into the lower-centre.'},
+  blue  :{name:'Blue',          grade:'V2',level:1,style:'Vertical · domes', desc:'Blue holds down the centre and out the right diagonal.'},
+  grey  :{name:'Grey / Wood',   grade:'V1',level:1,style:'Open · slopers',   desc:'Neutral grey & wooden holds through the middle — open feet.'},
+  purple:{name:'Purple',        grade:'V0',level:1,style:'Intro · low',      desc:'Low purple hold on the far left.'},
+};
+const ORDER=['yellow','green','blue','grey','purple'];
+const ROUTES=ORDER.filter(c=>allHolds.some(h=>h.userData.colorName===c)).map(c=>({
+  id:c,color:COL[c],count:allHolds.filter(h=>h.userData.colorName===c).length,...META[c]}));
+const byRoute=Object.fromEntries(ROUTES.map(r=>[r.id,r]));
+
+/* =========================================================================
+   INTERACTION
+   ========================================================================= */
+let active=null;
+function applyView(){
+  const set=active?new Set(allHolds.filter(h=>h.userData.colorName===active).map(h=>h.userData.id)):null;
+  allHolds.forEach(h=>{const u=h.userData;
+    if(!set){u.mat.color.setHex(u.baseColor);u.mat.emissiveIntensity=0;u.mat.transparent=false;u.mat.opacity=1;}
+    else if(set.has(u.id)){u.mat.color.setHex(u.baseColor);u.mat.emissiveIntensity=.28;u.mat.transparent=false;u.mat.opacity=1;}
+    else{u.mat.color.setHex(0xb9bcc2);u.mat.emissiveIntensity=0;u.mat.transparent=true;u.mat.opacity=.5;}});
 }
-function ringTex(){const c=document.createElement('canvas');c.width=c.height=128;const x=c.getContext('2d');
-  x.strokeStyle='#fff';x.lineWidth=10;x.beginPath();x.arc(64,64,44,0,7);x.stroke();
-  x.shadowColor='#fff';x.shadowBlur=12;x.stroke();
-  const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;return t;}
-function applyMarks(){ markers.forEach(m=>{ const on=marksOn&&(active===null||m.userData.routeId===active);
-  m.material.opacity=on?(active===m.userData.routeId?1:(active?0:.5)):0; }); }
-function select(id){ active=(active===id)?null:id;
+function select(id){
+  active=(active===id)?null:id; applyView();
   document.querySelectorAll('.route').forEach(el=>el.classList.toggle('active',el.dataset.id===active));
-  applyMarks(); }
+  const d=document.getElementById('detail');
+  if(active){const r=byRoute[active];d.classList.add('show');
+    d.querySelector('.swatch').style.background='#'+r.color.toString(16).padStart(6,'0');
+    d.querySelector('.nm').textContent=r.name; d.querySelector('.grade').textContent=r.grade;
+    d.querySelector('[data-level]').textContent=['','Beginner','Intermediate','Advanced'][r.level];
+    d.querySelector('[data-holds]').textContent=r.count;
+    d.querySelector('[data-style]').textContent=r.style.split(' · ')[0];
+    d.querySelector('[data-desc]').textContent=r.desc;
+  } else d.classList.remove('show');
+}
+const ray=new R.Raycaster(),mouse=new R.Vector2(); let downXY=null;
+renderer.domElement.addEventListener('pointerdown',e=>downXY=[e.clientX,e.clientY]);
+renderer.domElement.addEventListener('pointerup',e=>{if(!downXY)return;
+  if(Math.hypot(e.clientX-downXY[0],e.clientY-downXY[1])>6)return;
+  mouse.x=(e.clientX/innerWidth)*2-1;mouse.y=-(e.clientY/innerHeight)*2+1;ray.setFromCamera(mouse,camera);
+  const hit=ray.intersectObjects(allHolds,false)[0]; if(hit)select(hit.object.userData.colorName);});
 
-document.getElementById('btnReset').onclick=()=>{ if(HOME){camera.position.copy(HOME.pos);controls.target.copy(HOME.tgt);if(HOME.up)camera.up.copy(HOME.up);controls.update();} };
-document.getElementById('btnMarks').onclick=e=>{marksOn=!marksOn;e.currentTarget.classList.toggle('on',marksOn);applyMarks();};
+/* sidebar */
+const listEl=document.getElementById('list');
+ROUTES.forEach(r=>{const el=document.createElement('div');el.className='route';el.dataset.id=r.id;
+  el.innerHTML=`<span class="swatch" style="background:#${r.color.toString(16).padStart(6,'0')}"></span>
+    <div class="meta"><div class="nm">${r.name}</div>
+    <div class="sub">${['','Beginner','Intermediate','Advanced'][r.level]} · ${r.count} holds</div></div>
+    <span class="grade">${r.grade}</span>`;
+  el.onclick=()=>select(r.id); listEl.appendChild(el);});
+document.getElementById('btnReset').onclick=()=>{tweenCam(HOME.pos);tweenTarget(HOME.tgt);};
+document.getElementById('btnAll').onclick=()=>{ if(active)select(active); tweenCam(HOME.pos);tweenTarget(HOME.tgt); };
 
-function animate(){ requestAnimationFrame(animate); controls.update(); renderer.render(scene,camera); }
+/* tweens + loop */
+let camTween=null,tgtTween=null;
+function tweenCam(to){camTween={from:camera.position.clone(),to:to.clone(),t:0};}
+function tweenTarget(to){tgtTween={from:controls.target.clone(),to:to.clone(),t:0};}
+const ease=t=>t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
+let last=performance.now();
+function loop(now){const dt=Math.min((now-last)/1000,.05);last=now;
+  if(camTween){camTween.t=Math.min(camTween.t+dt/.9,1);camera.position.lerpVectors(camTween.from,camTween.to,ease(camTween.t));if(camTween.t>=1)camTween=null;}
+  if(tgtTween){tgtTween.t=Math.min(tgtTween.t+dt/.9,1);controls.target.lerpVectors(tgtTween.from,tgtTween.to,ease(tgtTween.t));if(tgtTween.t>=1)tgtTween=null;}
+  controls.update();renderer.render(scene,camera);requestAnimationFrame(loop);}
+applyView();requestAnimationFrame(loop);
+document.getElementById('loading').style.display='none';
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
 </script>
 </body>
