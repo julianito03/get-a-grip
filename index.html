@@ -21,6 +21,10 @@
   .seg button{flex:1;padding:9px 0;font-size:12.5px;font-weight:600;color:var(--muted);background:var(--panel2);
     border:1px solid var(--line);border-radius:9px;cursor:pointer;transition:.15s}
   .seg button.on{color:#111;background:#fff;border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+  .sitem{display:flex;align-items:center;gap:10px;padding:10px 18px;margin:2px 8px;border-radius:9px;cursor:pointer;font-size:13.5px;font-weight:600;color:var(--ink)}
+  .sitem:hover{background:var(--panel2)} .sitem.on{background:#fff8e6;box-shadow:0 0 0 1px var(--accent) inset}
+  .sitem .d{width:10px;height:10px;border-radius:3px;background:var(--accent);flex:0 0 auto}
+  .sitem small{display:block;font-weight:400;color:var(--muted);font-size:11.5px;margin-top:1px}
   .row{display:flex;align-items:center;justify-content:space-between;padding:9px 18px;font-size:13px;color:var(--ink)}
   .row .v{color:var(--muted)}
   .spacer{flex:1}
@@ -33,7 +37,9 @@
 <div id="app"></div>
 <div id="loading">Loading 3D wall…</div>
 <div id="ui">
-  <div class="brand"><h1><span class="dot"></span>GET A GRIP</h1><p>Prow wall · reconstructed 3D</p></div>
+  <div class="brand"><h1><span class="dot"></span>GET A GRIP</h1><p>Reconstructed 3D wall</p></div>
+  <div class="grp">Wall section</div>
+  <div id="sections"></div>
   <div class="grp">Render</div>
   <div class="seg" id="mode"><button data-m="clay" class="on">Clay</button><button data-m="tex">Textured</button></div>
   <div class="grp">View</div>
@@ -77,31 +83,48 @@ const rim=new R.DirectionalLight(0xfff0dd,.7); fill.position.set(9,5,3); scene.a
 let ground;
 const clayMat=new R.MeshStandardMaterial({color:0x9aa0a8,roughness:.72,metalness:.02,envMapIntensity:.6});
 let HOME=null, model=null; const originals=new Map();
+let curMode='clay';
 
-new GLTFLoader().load('meshy.glb',gl=>{
-  model=gl.scene;
-  model.traverse(o=>{ if(o.isMesh){ o.castShadow=true; o.receiveShadow=true; originals.set(o,o.material);
-    if(o.material){o.material.roughness=Math.min(1,(o.material.roughness??.8));} } });
-  // normalise scale/position: sit on ground, centre
-  const box=new R.Box3().setFromObject(model); const c=box.getCenter(new R.Vector3()); const s=box.getSize(new R.Vector3());
-  const scale=6/Math.max(s.x,s.y,s.z); model.scale.setScalar(scale);
-  const box2=new R.Box3().setFromObject(model); const c2=box2.getCenter(new R.Vector3()); const min2=box2.min;
-  model.position.sub(new R.Vector3(c2.x, min2.y, c2.z));
-  scene.add(model);
-  const b=new R.Box3().setFromObject(model); const ctr=b.getCenter(new R.Vector3()); const sz=b.getSize(new R.Vector3());
-  const r=Math.max(sz.x,sz.y);
-  ground=new R.Mesh(new R.PlaneGeometry(r*8,r*8),new R.MeshStandardMaterial({color:0xe4e7eb,roughness:.96}));
-  ground.rotation.x=-PI/2; ground.position.y=0; ground.receiveShadow=true; scene.add(ground);
-  key.target.position.copy(ctr); scene.add(key.target);
-  HOME={pos:new R.Vector3(ctr.x+r*0.55, ctr.y+sz.y*0.15, ctr.z+r*1.35), tgt:ctr.clone()};
-  camera.position.copy(HOME.pos); controls.target.copy(HOME.tgt);
-  camera.near=r/200; camera.far=r*30; camera.updateProjectionMatrix();
-  setMode('clay');
-  document.getElementById('loading').style.display='none';
-},undefined,e=>{document.getElementById('loading').textContent='Could not load model.';});
+const SECTIONS=[
+  {id:'prow',   name:'Prow wall',        sub:'yellow fan volumes',  file:'meshy.glb',  yaw:0},
+  {id:'corner', name:'Corner section',   sub:'grey triangle volumes',file:'corner.glb', yaw:PI},
+];
+const secEl=document.getElementById('sections');
+SECTIONS.forEach((s,i)=>{const el=document.createElement('div');el.className='sitem'+(i===0?' on':'');el.dataset.id=s.id;
+  el.innerHTML=`<span class="d"></span><div><div>${s.name}</div><small>${s.sub}</small></div>`;
+  el.onclick=()=>{document.querySelectorAll('.sitem').forEach(x=>x.classList.toggle('on',x===el)); loadSection(s);};
+  secEl.appendChild(el);});
+
+function loadSection(sec){ const file=sec.file;
+  document.getElementById('loading').style.display='flex';
+  document.getElementById('loading').textContent='Loading 3D wall…';
+  if(model){ scene.remove(model); model.traverse(o=>{if(o.isMesh){o.geometry?.dispose();}}); originals.clear(); }
+  new GLTFLoader().load(file,gl=>{
+    model=gl.scene;
+    model.traverse(o=>{ if(o.isMesh){ o.castShadow=true; o.receiveShadow=true; originals.set(o,o.material);
+      if(o.material){o.material.roughness=Math.min(1,(o.material.roughness??.8));} } });
+    model.rotation.y=sec.yaw||0;
+    const box=new R.Box3().setFromObject(model); const s2=box.getSize(new R.Vector3());
+    model.scale.setScalar(6/Math.max(s2.x,s2.y,s2.z));
+    const b2=new R.Box3().setFromObject(model); const c2=b2.getCenter(new R.Vector3()); const min2=b2.min;
+    model.position.sub(new R.Vector3(c2.x, min2.y, c2.z));
+    scene.add(model);
+    const b=new R.Box3().setFromObject(model); const ctr=b.getCenter(new R.Vector3()); const sz=b.getSize(new R.Vector3());
+    const r=Math.max(sz.x,sz.y);
+    if(!ground){ ground=new R.Mesh(new R.PlaneGeometry(200,200),new R.MeshStandardMaterial({color:0xe4e7eb,roughness:.96}));
+      ground.rotation.x=-PI/2; ground.receiveShadow=true; scene.add(ground); }
+    key.target.position.copy(ctr); if(!key.target.parent)scene.add(key.target);
+    HOME={pos:new R.Vector3(ctr.x+r*0.55, ctr.y+sz.y*0.15, ctr.z+r*1.35), tgt:ctr.clone()};
+    camera.position.copy(HOME.pos); controls.target.copy(HOME.tgt);
+    camera.near=r/200; camera.far=r*30; camera.updateProjectionMatrix();
+    setMode(curMode);
+    document.getElementById('loading').style.display='none';
+  },undefined,()=>{document.getElementById('loading').textContent='Section not available yet.';});
+}
+loadSection(SECTIONS[0]);
 
 function setMode(m){
-  if(!model)return;
+  curMode=m; if(!model)return;
   model.traverse(o=>{ if(o.isMesh){ o.material = (m==='clay')?clayMat:originals.get(o); if(o.material) o.material.wireframe=wireOn; } });
   document.querySelectorAll('#mode button').forEach(b=>b.classList.toggle('on',b.dataset.m===m));
 }
