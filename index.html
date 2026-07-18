@@ -189,8 +189,11 @@ function apply(){
 }
 
 const SECTIONS=[
-  {id:'prow',name:'Prow wall',sub:'yellow-volume face',file:'meshy.glb',yaw:0,rx:0},
-  {id:'sec2',name:'Green face',sub:'green / blue / grey route',file:'section2.glb',yaw:0,rx:PI/2},
+  {id:'prow', name:'Prow wall',      sub:'yellow-volume face',    file:'meshy.glb',   yaw:0,   rx:0},
+  {id:'sec2', name:'Green face',     sub:'green / blue / grey',   file:'section2.glb',yaw:0,   rx:PI/2},
+  {id:'left', name:'Left wall',      sub:'stacked yellow · pink', file:'leftwall.glb',yaw:0,   rx:0},
+  {id:'tri',  name:'Triangle bay',   sub:'grey volumes · blue',   file:'trisec.glb',  yaw:0,   rx:0},
+  {id:'sec3', name:'Corner face',    sub:'green / yellow / blue', file:'section3.glb',yaw:0,   rx:PI/2},
 ];
 const secEl=document.getElementById('sections');
 SECTIONS.forEach((s,i)=>{const el=document.createElement('div');el.className='sitem'+(i===0?' on':'');
