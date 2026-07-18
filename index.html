@@ -86,8 +86,9 @@ let HOME=null, model=null; const originals=new Map();
 let curMode='clay';
 
 const SECTIONS=[
-  {id:'prow',   name:'Prow wall',        sub:'yellow fan volumes',  file:'meshy.glb',  yaw:0},
-  {id:'corner', name:'Corner section',   sub:'grey triangle volumes',file:'corner.glb', yaw:PI},
+  {id:'prow',   name:'Prow wall',        sub:'clean · head-on photo', file:'meshy.glb',  yaw:0},
+  {id:'whole',  name:'Whole corner',     sub:'rough · stitched pano', file:'wholewall.glb', yaw:0},
+  {id:'corner', name:'Corner section',   sub:'rough · wide photo',    file:'corner.glb', yaw:PI},
 ];
 const secEl=document.getElementById('sections');
 SECTIONS.forEach((s,i)=>{const el=document.createElement('div');el.className='sitem'+(i===0?' on':'');el.dataset.id=s.id;
