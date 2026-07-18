@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-07-18T14:36:27.028Z",
+  "source": "wall.ply",
+  "sourceSplats": 90261,
+  "mode": "full-wall-gaussian-splat-with-semantic-overlays",
+  "view": {
+    "pos": [
+      0.08740755745205205,
+      -0.06970789435563307,
+      -0.2516639787235341
+    ],
+    "target": [
+      -0.004840659964730709,
+      0.17616727601689994,
+      4.046597229619137
+    ],
+    "up": [
+      0.07372609114085682,
+      -0.9955593936534028,
+      0.058531676838775366
+    ]
+  },
+  "routes": [
+    {
+      "id": "yellow",
+      "name": "Yellow",
+      "color": "#ffd20a",
+      "file": "splat-routes/route-yellow.splat",
+      "splats": 4925,
+      "holds": 20
+    },
+    {
+      "id": "green",
+      "name": "Green",
+      "color": "#36d126",
+      "file": "splat-routes/route-green.splat",
+      "splats": 1626,
+      "holds": 7
+    },
+    {
+      "id": "blue",
+      "name": "Blue",
+      "color": "#2486ff",
+      "file": "splat-routes/route-blue.splat",
+      "splats": 2556,
+      "holds": 9
+    },
+    {
+      "id": "pinkpurple",
+      "name": "Pink / Purple",
+      "color": "#e33cc2",
+      "file": "splat-routes/route-pinkpurple.splat",
+      "splats": 1279,
+      "holds": 2
+    }
+  ],
+  "limitations": [
+    "The full video scan is a Gaussian 3D reconstruction rather than a watertight mesh.",
+    "Route overlays combine source colour evidence with the reviewed 3D hold markers.",
+    "Beige, neutral-grey and black holds require a manual marker pass before they can be highlighted reliably."
+  ]
+}
