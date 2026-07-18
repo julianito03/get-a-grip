@@ -163,7 +163,7 @@ function classify(mesh,mat){   // → Uint8 group per vertex + counts; enables b
 }
 function forEachPart(fn){ parts.forEach(fn); }
 function buildBlackWall(){ forEachPart(p=>{ const a=p.mesh.geometry.attributes.color.array,g=p.groups;
-  for(let i=0;i<g.length;i++){ const c=(g[i]===0)?0.06:1.0; a[i*3]=c;a[i*3+1]=c;a[i*3+2]=c; } p.mesh.geometry.attributes.color.needsUpdate=true; }); }
+  for(let i=0;i<g.length;i++){ const c=(g[i]===0)?0.015:1.0; a[i*3]=c;a[i*3+1]=c;a[i*3+2]=c; } p.mesh.geometry.attributes.color.needsUpdate=true; }); }
 function buildHighlight(){ const tgt=GID[activeColor]; forEachPart(p=>{ const a=p.mesh.geometry.attributes.color.array,g=p.groups;
   for(let i=0;i<g.length;i++){ const gid=g[i]; let c;
     if(activeColor==='all') c=IDCOL[gid];
