@@ -115,13 +115,14 @@ function rgb2hsv(r,g,b){ r/=255;g/=255;b/=255; const mx=Math.max(r,g,b),mn=Math.
   if(d>1e-6){ if(mx===r)h=((g-b)/d)%6; else if(mx===g)h=(b-r)/d+2; else h=(r-g)/d+4; h*=60; if(h<0)h+=360; }
   return [h, mx<=0?0:d/mx, mx]; }
 function classifyRGB(Rr,Gg,Bb){ const [h,s,v]=rgb2hsv(Rr,Gg,Bb);
-  if(v<0.23) return 0;
-  if(h>=40&&h<=68&&s>=0.42&&v>=0.50) return GID.yellow;
-  if(h>=66&&h<=170&&s>=0.20&&v>=0.22) return GID.green;
-  if(h>=170&&h<=256&&s>=0.15&&v>=0.18) return GID.blue;
-  if(h>=256&&h<=346&&s>=0.14&&v>=0.18) return GID.pinkpurple;
-  if(h>=15&&h<=52&&s>=0.16&&s<0.55&&v>=0.32&&v<=0.86) return GID.beigegrey;  // warm beige/wood holds
-  return 0; }   // note: neutral-grey holds share the wall's colour → not colour-separable (flagged)
+  if(v<0.24) return 0;                                     // wall / shadow
+  // tight, gap-separated hue bands + high saturation floors → colours stop conflicting
+  if(h>=42&&h<=64 && s>=0.48 && v>=0.52) return GID.yellow;
+  if(h>=76&&h<=164 && s>=0.30 && v>=0.26) return GID.green;
+  if(h>=188&&h<=250 && s>=0.28 && v>=0.20) return GID.blue;
+  if((h>=286&&h<=346 || (h>=256&&h<286&&s>=0.22)) && s>=0.20 && v>=0.20) return GID.pinkpurple;
+  if(h>=17&&h<=46 && s>=0.20 && s<0.48 && v>=0.36 && v<=0.82) return GID.beigegrey; // warm beige/wood only
+  return 0; }   // neutral-grey & black holds share the wall's colour → not colour-separable (flagged)
 
 const routesEl=document.getElementById('routes'), flagEl=document.getElementById('flag');
 function buildRouteUI(counts){
@@ -159,7 +160,13 @@ function classify(mesh){
   }
   groups=g; mainMesh=mesh; lastCounts=counts;
   mesh.geometry.setAttribute('color',new R.BufferAttribute(new Float32Array(N*3),3));
+  const om=originals.get(mesh); if(om){om.vertexColors=true;}   // enable texture×vertex multiply (black wall)
   buildRouteUI(counts);
+}
+function buildBlackWall(){   // wall → near black, holds keep full texture (map × vertexColor)
+  if(!mainMesh||!groups) return; const arr=mainMesh.geometry.attributes.color.array;
+  for(let i=0;i<groups.length;i++){ const c=(groups[i]===0)?0.06:1.0; arr[i*3]=c;arr[i*3+1]=c;arr[i*3+2]=c; }
+  mainMesh.geometry.attributes.color.needsUpdate=true;
 }
 function buildHighlight(){
   if(!mainMesh||!groups) return; const arr=mainMesh.geometry.attributes.color.array;
@@ -177,13 +184,17 @@ function buildHighlight(){
 function apply(){
   if(!model) return;
   if(activeColor){ buildHighlight(); model.traverse(o=>{if(o.isMesh)o.material=(o===mainMesh)?hlMat:clayMat;}); }
-  else model.traverse(o=>{if(o.isMesh)o.material=(curMode==='clay')?clayMat:originals.get(o);});
+  else if(curMode==='clay'){ model.traverse(o=>{if(o.isMesh)o.material=clayMat;}); }
+  else { buildBlackWall(); model.traverse(o=>{if(o.isMesh)o.material=originals.get(o);}); }
 }
 
-const SECTIONS=[{id:'prow',name:'Prow wall',sub:'reconstructed',file:'meshy.glb',yaw:0}];
+const SECTIONS=[
+  {id:'prow',name:'Prow wall',sub:'yellow-volume face',file:'meshy.glb',yaw:0,rx:0},
+  {id:'sec2',name:'Green face',sub:'green / blue / grey route',file:'section2.glb',yaw:0,rx:PI/2},
+];
 const secEl=document.getElementById('sections');
 SECTIONS.forEach((s,i)=>{const el=document.createElement('div');el.className='sitem'+(i===0?' on':'');
-  el.innerHTML=`<span class="d"></span><div>${s.name}</div>`;
+  el.innerHTML=`<span class="d"></span><div>${s.name}<small>${s.sub}</small></div>`;
   el.onclick=()=>{document.querySelectorAll('.sitem').forEach(x=>x.classList.toggle('on',x===el));activeColor=null;flagEl.style.display='none';loadSection(s);};
   secEl.appendChild(el);});
 
@@ -195,7 +206,7 @@ function loadSection(sec){
     model.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;originals.set(o,o.material);
       if(o.material)o.material.roughness=Math.min(1,o.material.roughness??.8);
       const cnt=o.geometry.attributes.position.count; if(cnt>bm){bm=cnt;big=o;}}});
-    model.rotation.y=sec.yaw||0;
+    model.rotation.set(sec.rx||0, sec.yaw||0, 0);
     let b=new R.Box3().setFromObject(model); let sz=b.getSize(new R.Vector3()); model.scale.setScalar(6/Math.max(sz.x,sz.y,sz.z));
     b=new R.Box3().setFromObject(model); const c=b.getCenter(new R.Vector3()),mn=b.min; model.position.sub(new R.Vector3(c.x,mn.y,c.z));
     scene.add(model);
