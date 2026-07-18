@@ -5,32 +5,38 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
 <title>Get a Grip — 3D Wall</title>
 <style>
-  :root{--bg:#eceef1;--panel2:#f4f6f8;--line:#e0e3e8;--ink:#1c1f24;--muted:#6b7280;--accent:#f2b705;
+  :root{--bg:#eceef1;--panel2:#f4f6f8;--line:#e2e5ea;--ink:#1c1f24;--muted:#6b7280;--accent:#f2b705;
     --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
   *{box-sizing:border-box}
   html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:var(--font);overflow:hidden}
   #app{position:fixed;inset:0} canvas{display:block}
-  #ui{position:absolute;top:0;left:0;height:100%;width:300px;background:rgba(255,255,255,.86);
+  #ui{position:absolute;top:0;left:0;height:100%;width:302px;background:rgba(255,255,255,.9);
     border-right:1px solid var(--line);display:flex;flex-direction:column;backdrop-filter:blur(10px);z-index:10}
   .brand{padding:20px 20px 15px;border-bottom:1px solid var(--line)}
   .brand h1{margin:0;font-size:19px;letter-spacing:.02em;font-weight:800;display:flex;align-items:center;gap:9px}
   .brand h1 .dot{width:11px;height:11px;border-radius:3px;background:var(--accent)}
   .brand p{margin:5px 0 0;font-size:12px;color:var(--muted)}
-  .grp{padding:16px 18px 4px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
-  .seg{display:flex;gap:6px;padding:4px 16px}
+  .scroll{flex:1;overflow-y:auto}
+  .grp{padding:15px 18px 5px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  .seg{display:flex;gap:6px;padding:2px 16px}
   .seg button{flex:1;padding:9px 0;font-size:12.5px;font-weight:600;color:var(--muted);background:var(--panel2);
     border:1px solid var(--line);border-radius:9px;cursor:pointer;transition:.15s}
   .seg button.on{color:#111;background:#fff;border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
-  .sitem{display:flex;align-items:center;gap:10px;padding:10px 18px;margin:2px 8px;border-radius:9px;cursor:pointer;font-size:13.5px;font-weight:600;color:var(--ink)}
+  .sitem{display:flex;align-items:center;gap:10px;padding:9px 18px;margin:2px 8px;border-radius:9px;cursor:pointer;font-size:13.5px;font-weight:600}
   .sitem:hover{background:var(--panel2)} .sitem.on{background:#fff8e6;box-shadow:0 0 0 1px var(--accent) inset}
   .sitem .d{width:10px;height:10px;border-radius:3px;background:var(--accent);flex:0 0 auto}
-  .sitem small{display:block;font-weight:400;color:var(--muted);font-size:11.5px;margin-top:1px}
-  .row{display:flex;align-items:center;justify-content:space-between;padding:9px 18px;font-size:13px;color:var(--ink)}
-  .row .v{color:var(--muted)}
-  .spacer{flex:1}
+  .sitem small{display:block;font-weight:400;color:var(--muted);font-size:11px;margin-top:1px}
+  .routes{padding:4px 12px 6px}
+  .rt{display:flex;align-items:center;gap:11px;padding:9px 12px;margin:4px 0;border-radius:9px;cursor:pointer;
+    border:1px solid transparent;font-size:13.5px;font-weight:600;transition:.13s}
+  .rt:hover{background:var(--panel2)} .rt.on{background:#fff;border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+  .rt .sw{width:18px;height:18px;border-radius:5px;flex:0 0 auto;box-shadow:0 0 0 2px rgba(0,0,0,.06)}
+  .rt .ct{margin-left:auto;font-size:11.5px;color:var(--muted);font-weight:600}
+  .row{display:flex;align-items:center;justify-content:space-between;padding:8px 18px;font-size:13px}
   .hint{padding:12px 20px;border-top:1px solid var(--line);font-size:11.5px;color:var(--muted);line-height:1.5}
+  .hint a{color:var(--muted)}
   #loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:var(--bg);z-index:50;color:var(--muted);font-size:14px}
-  @media(max-width:720px){#ui{width:100%;height:auto;max-height:42%;bottom:0;top:auto;border-right:none;border-top:1px solid var(--line)}}
+  @media(max-width:720px){#ui{width:100%;height:auto;max-height:44%;bottom:0;top:auto;border-right:none;border-top:1px solid var(--line)}}
 </style>
 </head>
 <body>
@@ -38,15 +44,18 @@
 <div id="loading">Loading 3D wall…</div>
 <div id="ui">
   <div class="brand"><h1><span class="dot"></span>GET A GRIP</h1><p>Reconstructed 3D wall</p></div>
-  <div class="grp">Wall section</div>
-  <div id="sections"></div>
-  <div class="grp">Render</div>
-  <div class="seg" id="mode"><button data-m="clay" class="on">Clay</button><button data-m="tex">Textured</button></div>
-  <div class="grp">View</div>
-  <div class="seg" id="spin"><button data-s="1">Auto-rotate</button><button data-s="0" class="on">Manual</button></div>
-  <div class="row">Wireframe <span><input type="checkbox" id="wire"></span></div>
-  <div class="spacer"></div>
-  <div class="hint">Solid mesh reconstructed from the wall photo. Drag to orbit · scroll to zoom. Clay shows pure geometry; Textured shows the surface.</div>
+  <div class="scroll">
+    <div class="grp">Routes · by colour</div>
+    <div class="routes" id="routes"></div>
+    <div class="grp">Wall section</div>
+    <div id="sections"></div>
+    <div class="grp">Render</div>
+    <div class="seg" id="mode"><button data-m="clay" class="on">Clay</button><button data-m="tex">Textured</button></div>
+    <div class="grp">View</div>
+    <div class="seg" id="spin"><button data-s="1">Auto-rotate</button><button data-s="0" class="on">Manual</button></div>
+    <div class="row">Wireframe <input type="checkbox" id="wire"></div>
+  </div>
+  <div class="hint">Solid mesh reconstructed from the wall photo. Pick a colour to light up that route on the geometry. · <a href="splat.html">photoreal scan ›</a></div>
 </div>
 
 <script type="importmap">
@@ -62,82 +71,154 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 const R=THREE, PI=Math.PI;
 
-const scene=new R.Scene(); scene.background=new R.Color(0xeceef1);
+const scene=new R.Scene();
+// soft vertical gradient background
+(function(){const c=document.createElement('canvas');c.width=2;c.height=256;const x=c.getContext('2d');
+  const g=x.createLinearGradient(0,0,0,256);g.addColorStop(0,'#f4f6f9');g.addColorStop(1,'#dfe3e9');x.fillStyle=g;x.fillRect(0,0,2,256);
+  const t=new R.CanvasTexture(c);t.colorSpace=R.SRGBColorSpace;scene.background=t;})();
+
 const renderer=new R.WebGLRenderer({antialias:true}); renderer.setPixelRatio(Math.min(devicePixelRatio,2));
 renderer.setSize(innerWidth,innerHeight); renderer.shadowMap.enabled=true; renderer.shadowMap.type=R.PCFSoftShadowMap;
-renderer.toneMapping=R.ACESFilmicToneMapping; renderer.toneMappingExposure=1.0; document.getElementById('app').appendChild(renderer.domElement);
+renderer.toneMapping=R.ACESFilmicToneMapping; renderer.toneMappingExposure=1.02; document.getElementById('app').appendChild(renderer.domElement);
 const pmrem=new R.PMREMGenerator(renderer); scene.environment=pmrem.fromScene(new RoomEnvironment(),0.03).texture;
 
-const camera=new R.PerspectiveCamera(42,innerWidth/innerHeight,0.01,1000);
+const camera=new R.PerspectiveCamera(40,innerWidth/innerHeight,0.01,1000);
 const controls=new OrbitControls(camera,renderer.domElement); controls.enableDamping=true; controls.dampingFactor=.08;
-controls.minDistance=0.3; controls.maxPolarAngle=PI*0.56;
+controls.minDistance=0.3; controls.maxPolarAngle=PI*0.58;
 
-scene.add(new R.HemisphereLight(0xffffff,0x9099a6,.9));
-const key=new R.DirectionalLight(0xfff4e2,2.3); key.position.set(-4,9,7); key.castShadow=true;
-key.shadow.mapSize.set(2048,2048); key.shadow.bias=-0.0003; key.shadow.normalBias=0.02;
-key.shadow.camera.near=0.1; key.shadow.camera.far=60;
-scene.add(key);
-const fill=new R.DirectionalLight(0xeaf0ff,1.1); fill.position.set(5,3,9); scene.add(fill);
-const rim=new R.DirectionalLight(0xfff0dd,.7); fill.position.set(9,5,3); scene.add(rim);
+scene.add(new R.HemisphereLight(0xffffff,0x9aa2b0,.85));
+const key=new R.DirectionalLight(0xfff4e2,2.5); key.position.set(-5,10,7); key.castShadow=true;
+key.shadow.mapSize.set(2048,2048); key.shadow.bias=-0.0003; key.shadow.normalBias=0.03; key.shadow.radius=6;
+key.shadow.camera.near=0.1; key.shadow.camera.far=80; scene.add(key);
+const fill=new R.DirectionalLight(0xeaf1ff,1.1); fill.position.set(6,3,9); scene.add(fill);
+const rim=new R.DirectionalLight(0xfff1de,.9); rim.position.set(8,6,-4); scene.add(rim);
 
 let ground;
-const clayMat=new R.MeshStandardMaterial({color:0x9aa0a8,roughness:.72,metalness:.02,envMapIntensity:.6});
-let HOME=null, model=null; const originals=new Map();
-let curMode='clay';
+const clayMat=new R.MeshStandardMaterial({color:0x9ba1a9,roughness:.68,metalness:.02,envMapIntensity:.7});
+const hlMat=new R.MeshStandardMaterial({vertexColors:true,roughness:.55,metalness:.02,envMapIntensity:.7});
+let HOME=null, model=null, mainMesh=null, groups=null, curMode='clay', wireOn=false, activeColor=null;
+const originals=new Map();
 
+/* ---- routes (colour) ---- */
+const ROUTES=[
+  {id:'yellow',name:'Yellow',hex:0xf1c40f}, {id:'green',name:'Green',hex:0x5bbf3f},
+  {id:'blue',name:'Blue',hex:0x3f7ec4},     {id:'purple',name:'Purple',hex:0x8f5bb0},
+];
+const GID={none:0,yellow:1,green:2,blue:3,purple:4};
+const IDCOL=[[0.48,0.49,0.53],[1.0,0.78,0.03],[0.32,0.80,0.20],[0.20,0.50,0.85],[0.60,0.30,0.80]];
+function classifyRGB(Rr,Gg,Bb){
+  const mx=Math.max(Rr,Gg,Bb),mn=Math.min(Rr,Gg,Bb),sat=mx-mn;
+  if(mx<74) return 0;
+  if(Rr>140&&Gg>110&&Bb<120&&Rr>Bb+38) return GID.yellow;
+  if(Gg>92&&Gg>=Rr-4&&Gg>Bb+12&&sat>24) return GID.green;
+  if(Bb>80&&Bb>=Rr&&Bb>=Gg-16&&sat>16) return GID.blue;
+  if(Rr>58&&Bb>58&&Gg<Math.min(Rr,Bb)-8&&sat>18) return GID.purple;
+  return 0;
+}
+const routesEl=document.getElementById('routes');
+function buildRouteUI(counts){
+  routesEl.innerHTML='';
+  const all=document.createElement('div');all.className='rt'+(activeColor==='all'?' on':'');all.dataset.id='all';
+  all.innerHTML=`<span class="sw" style="background:linear-gradient(90deg,#f1c40f,#5bbf3f,#3f7ec4,#8f5bb0)"></span>All routes`;
+  all.onclick=()=>pick('all'); routesEl.appendChild(all);
+  ROUTES.forEach(r=>{const el=document.createElement('div');el.className='rt'+(activeColor===r.id?' on':'');el.dataset.id=r.id;
+    const c=counts?counts[GID[r.id]]:0;
+    el.innerHTML=`<span class="sw" style="background:#${r.hex.toString(16).padStart(6,'0')}"></span>${r.name}<span class="ct">${c||''}</span>`;
+    el.onclick=()=>pick(r.id); routesEl.appendChild(el);});
+}
+function pick(id){ activeColor=(activeColor===id)?null:id; buildRouteUI(lastCounts); apply(); }
+let lastCounts=null;
+
+/* ---- classify a mesh's vertices by texture colour ---- */
+function classify(mesh){
+  groups=null; mainMesh=null; lastCounts=null;
+  const tex=originals.get(mesh)&&originals.get(mesh).map;
+  const uv=mesh.geometry.attributes.uv;
+  if(!tex||!tex.image||!uv){ buildRouteUI(null); return; }
+  const img=tex.image; const cw=Math.min(1400,img.width||1024), ch=Math.round(cw*(img.height||1024)/(img.width||1024));
+  const cv=document.createElement('canvas');cv.width=cw;cv.height=ch;
+  const cx=cv.getContext('2d',{willReadFrequently:true});
+  try{ cx.drawImage(img,0,0,cw,ch);}catch(e){ buildRouteUI(null); return; }
+  const data=cx.getImageData(0,0,cw,ch).data;
+  const N=mesh.geometry.attributes.position.count; const g=new Uint8Array(N);
+  const flip=tex.flipY; const counts=[0,0,0,0,0];
+  for(let i=0;i<N;i++){
+    let u=uv.getX(i),v=uv.getY(i); u-=Math.floor(u); v-=Math.floor(v);
+    const px=Math.min(cw-1,Math.max(0,(u*cw)|0)); const py=Math.min(ch-1,Math.max(0,((flip?1-v:v)*ch)|0));
+    const o=(py*cw+px)*4; g[i]=classifyRGB(data[o],data[o+1],data[o+2]); counts[g[i]]++;
+  }
+  groups=g; mainMesh=mesh; lastCounts=counts;
+  mesh.geometry.setAttribute('color',new R.BufferAttribute(new Float32Array(N*3),3));
+  buildRouteUI(counts);
+}
+function buildHighlight(){
+  if(!mainMesh||!groups) return; const col=mainMesh.geometry.attributes.color; const arr=col.array;
+  for(let i=0;i<groups.length;i++){ const gid=groups[i];
+    let c;
+    if(activeColor==='all') c=IDCOL[gid];
+    else c=(gid===GID[activeColor])?IDCOL[gid]:IDCOL[0];
+    arr[i*3]=c[0];arr[i*3+1]=c[1];arr[i*3+2]=c[2];
+  }
+  col.needsUpdate=true;
+}
+
+/* ---- sections ---- */
 const SECTIONS=[
-  {id:'prow',   name:'Prow wall',        sub:'clean · head-on photo', file:'meshy.glb',  yaw:0},
-  {id:'whole',  name:'Whole corner',     sub:'rough · stitched pano', file:'wholewall.glb', yaw:0},
-  {id:'corner', name:'Corner section',   sub:'rough · wide photo',    file:'corner.glb', yaw:PI},
+  {id:'prow',   name:'Prow wall',      sub:'clean · head-on photo', file:'meshy.glb',    yaw:0},
+  {id:'whole',  name:'Whole corner',   sub:'rough · stitched pano', file:'wholewall.glb',yaw:0},
+  {id:'corner', name:'Corner section', sub:'rough · wide photo',    file:'corner.glb',   yaw:PI},
 ];
 const secEl=document.getElementById('sections');
 SECTIONS.forEach((s,i)=>{const el=document.createElement('div');el.className='sitem'+(i===0?' on':'');el.dataset.id=s.id;
   el.innerHTML=`<span class="d"></span><div><div>${s.name}</div><small>${s.sub}</small></div>`;
-  el.onclick=()=>{document.querySelectorAll('.sitem').forEach(x=>x.classList.toggle('on',x===el)); loadSection(s);};
+  el.onclick=()=>{document.querySelectorAll('.sitem').forEach(x=>x.classList.toggle('on',x===el)); activeColor=null; loadSection(s);};
   secEl.appendChild(el);});
 
-function loadSection(sec){ const file=sec.file;
-  document.getElementById('loading').style.display='flex';
-  document.getElementById('loading').textContent='Loading 3D wall…';
-  if(model){ scene.remove(model); model.traverse(o=>{if(o.isMesh){o.geometry?.dispose();}}); originals.clear(); }
+function apply(){
+  if(!model) return;
+  if(activeColor){ buildHighlight(); model.traverse(o=>{if(o.isMesh)o.material=(o===mainMesh)?hlMat:clayMat;}); }
+  else model.traverse(o=>{if(o.isMesh)o.material=(curMode==='clay')?clayMat:originals.get(o);});
+  model.traverse(o=>{if(o.isMesh&&o.material)o.material.wireframe=wireOn;});
+}
+
+function loadSection(sec){
+  const file=sec.file;
+  document.getElementById('loading').style.display='flex'; document.getElementById('loading').textContent='Loading 3D wall…';
+  if(model){ scene.remove(model); model.traverse(o=>{if(o.isMesh)o.geometry?.dispose();}); originals.clear(); }
   new GLTFLoader().load(file,gl=>{
-    model=gl.scene;
+    model=gl.scene; let biggest=null,bmax=0;
     model.traverse(o=>{ if(o.isMesh){ o.castShadow=true; o.receiveShadow=true; originals.set(o,o.material);
-      if(o.material){o.material.roughness=Math.min(1,(o.material.roughness??.8));} } });
+      const cnt=o.geometry.attributes.position.count; if(cnt>bmax){bmax=cnt;biggest=o;} } });
     model.rotation.y=sec.yaw||0;
-    const box=new R.Box3().setFromObject(model); const s2=box.getSize(new R.Vector3());
+    let box=new R.Box3().setFromObject(model); let s2=box.getSize(new R.Vector3());
     model.scale.setScalar(6/Math.max(s2.x,s2.y,s2.z));
-    const b2=new R.Box3().setFromObject(model); const c2=b2.getCenter(new R.Vector3()); const min2=b2.min;
-    model.position.sub(new R.Vector3(c2.x, min2.y, c2.z));
+    box=new R.Box3().setFromObject(model); const c2=box.getCenter(new R.Vector3()); const min2=box.min;
+    model.position.sub(new R.Vector3(c2.x,min2.y,c2.z));
     scene.add(model);
     const b=new R.Box3().setFromObject(model); const ctr=b.getCenter(new R.Vector3()); const sz=b.getSize(new R.Vector3());
     const r=Math.max(sz.x,sz.y);
-    if(!ground){ ground=new R.Mesh(new R.PlaneGeometry(200,200),new R.MeshStandardMaterial({color:0xe4e7eb,roughness:.96}));
+    if(!ground){ ground=new R.Mesh(new R.PlaneGeometry(400,400),new R.MeshStandardMaterial({color:0xe7eaee,roughness:.97}));
       ground.rotation.x=-PI/2; ground.receiveShadow=true; scene.add(ground); }
     key.target.position.copy(ctr); if(!key.target.parent)scene.add(key.target);
-    HOME={pos:new R.Vector3(ctr.x+r*0.55, ctr.y+sz.y*0.15, ctr.z+r*1.35), tgt:ctr.clone()};
+    HOME={pos:new R.Vector3(ctr.x+r*0.5,ctr.y+sz.y*0.16,ctr.z+r*1.3),tgt:ctr.clone()};
     camera.position.copy(HOME.pos); controls.target.copy(HOME.tgt);
     camera.near=r/200; camera.far=r*30; camera.updateProjectionMatrix();
-    setMode(curMode);
+    classify(biggest);
+    apply();
     document.getElementById('loading').style.display='none';
   },undefined,()=>{document.getElementById('loading').textContent='Section not available yet.';});
 }
-loadSection(SECTIONS[0]);
 
-function setMode(m){
-  curMode=m; if(!model)return;
-  model.traverse(o=>{ if(o.isMesh){ o.material = (m==='clay')?clayMat:originals.get(o); if(o.material) o.material.wireframe=wireOn; } });
-  document.querySelectorAll('#mode button').forEach(b=>b.classList.toggle('on',b.dataset.m===m));
-}
-let wireOn=false;
-document.getElementById('mode').onclick=e=>{const b=e.target.closest('button');if(b)setMode(b.dataset.m);};
-document.getElementById('wire').onchange=e=>{wireOn=e.target.checked; if(model)model.traverse(o=>{if(o.isMesh&&o.material)o.material.wireframe=wireOn;});};
+document.getElementById('mode').onclick=e=>{const b=e.target.closest('button');if(!b)return;curMode=b.dataset.m;
+  document.querySelectorAll('#mode button').forEach(x=>x.classList.toggle('on',x===b)); apply();};
+document.getElementById('wire').onchange=e=>{wireOn=e.target.checked; apply();};
 let spin=false;
 document.getElementById('spin').onclick=e=>{const b=e.target.closest('button');if(!b)return;spin=b.dataset.s==='1';
   document.querySelectorAll('#spin button').forEach(x=>x.classList.toggle('on',x===b));};
 
-function loop(){requestAnimationFrame(loop); if(spin&&model)model.rotation.y+=0.004; controls.update(); renderer.render(scene,camera);}
-loop();
+buildRouteUI(null);
+loadSection(SECTIONS[0]);
+function loop(){requestAnimationFrame(loop); if(spin&&model)model.rotation.y+=0.004; controls.update(); renderer.render(scene,camera);} loop();
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
 </script>
 </body>
