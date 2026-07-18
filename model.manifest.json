@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-07-18T14:15:37.271Z",
+  "source": "wall_fused.glb",
+  "model": "wall_semantic.glb",
+  "mode": "semantic-mesh",
+  "faceMap": {
+    "file": "route-faces.bin.gz",
+    "encoding": "gzip-uint8",
+    "triangles": 293423,
+    "labels": [
+      "structure",
+      "yellow",
+      "green",
+      "blue",
+      "pinkpurple",
+      "beigegrey",
+      "black"
+    ]
+  },
+  "limitations": [
+    "Segmentation is derived offline from the existing photo texture.",
+    "Black and neutral-grey holds remain part of the structure until they are manually separated in Blender.",
+    "Hidden geometry cannot be recovered from the original photographs."
+  ],
+  "routes": [
+    {
+      "id": "yellow",
+      "name": "Yellow",
+      "hex": "#f2c40c",
+      "available": true,
+      "triangles": 42642,
+      "verticesReferenced": 27947
+    },
+    {
+      "id": "green",
+      "name": "Green",
+      "hex": "#33c21f",
+      "available": true,
+      "triangles": 8502,
+      "verticesReferenced": 6860
+    },
+    {
+      "id": "blue",
+      "name": "Blue",
+      "hex": "#2276e8",
+      "available": true,
+      "triangles": 2191,
+      "verticesReferenced": 1675
+    },
+    {
+      "id": "pinkpurple",
+      "name": "Pink / Purple",
+      "hex": "#d23fae",
+      "available": true,
+      "triangles": 276,
+      "verticesReferenced": 194
+    },
+    {
+      "id": "beigegrey",
+      "name": "Beige / Grey",
+      "hex": "#c9b892",
+      "available": true,
+      "triangles": 1422,
+      "verticesReferenced": 1762
+    },
+    {
+      "id": "black",
+      "name": "Black",
+      "hex": "#222428",
+      "available": false
+    }
+  ],
+  "structure": {
+    "triangles": 238390,
+    "verticesReferenced": 142166
+  }
+}
