@@ -99,8 +99,8 @@ ground.rotation.x=-PI/2; ground.receiveShadow=true; scene.add(ground);
 
 const clayMat=new R.MeshStandardMaterial({color:0x9ba1a9,roughness:.66,metalness:.02,envMapIntensity:.7});
 const hlMat=new R.MeshStandardMaterial({vertexColors:true,roughness:.5,metalness:.02,envMapIntensity:.8});
-let HOME=null, model=null, mainMesh=null, groups=null, curMode='tex', activeColor=null, filterMode='isolate';
-const originals=new Map();
+let HOME=null, curMode='tex', activeColor=null, filterMode='isolate';
+const parts=[];   // one entry per welded face: {group, mesh, mat, groups}
 
 /* ---- route colours (material groups) ---- */
 const ROUTES=[
@@ -141,96 +141,105 @@ function pick(id){ activeColor=(activeColor===id)?null:id;
   buildRouteUI(lastCounts); apply(); }
 let lastCounts=null;
 
-function classify(mesh){
-  groups=null; mainMesh=null; lastCounts=null;
-  const tex=originals.get(mesh)&&originals.get(mesh).map; const uv=mesh.geometry.attributes.uv;
-  if(!tex||!tex.image||!uv){ buildRouteUI(null); return; }
-  const img=tex.image; const cw=Math.min(2048,img.width||1024), ch=Math.round(cw*(img.height||1024)/(img.width||1024));
-  const cv=document.createElement('canvas');cv.width=cw;cv.height=ch;
-  const cx=cv.getContext('2d',{willReadFrequently:true});
-  try{ cx.drawImage(img,0,0,cw,ch);}catch(e){ buildRouteUI(null); return; }
-  const data=cx.getImageData(0,0,cw,ch).data;
-  const N=mesh.geometry.attributes.position.count; const g=new Uint8Array(N);
-  const flip=tex.flipY; const counts=[0,0,0,0,0,0];
-  for(let i=0;i<N;i++){ let u=uv.getX(i),v=uv.getY(i); u-=Math.floor(u); v-=Math.floor(v);
-    const cxp=Math.min(cw-1,Math.max(0,(u*cw)|0)),cyp=Math.min(ch-1,Math.max(0,((flip?1-v:v)*ch)|0));
-    let sr=0,sg=0,sb=0,n=0;
-    for(let dy=-2;dy<=2;dy++)for(let dx=-2;dx<=2;dx++){const xx=cxp+dx,yy=cyp+dy;if(xx<0||yy<0||xx>=cw||yy>=ch)continue;const o=(yy*cw+xx)*4;sr+=data[o];sg+=data[o+1];sb+=data[o+2];n++;}
-    g[i]=classifyRGB(sr/n,sg/n,sb/n); counts[g[i]]++;
+function classify(mesh,mat){   // → Uint8 group per vertex + counts; enables black-wall multiply
+  const tex=mat&&mat.map; const uv=mesh.geometry.attributes.uv;
+  const N=mesh.geometry.attributes.position.count; const g=new Uint8Array(N); const counts=[0,0,0,0,0,0];
+  if(tex&&tex.image&&uv){
+    const img=tex.image; const cw=Math.min(2048,img.width||1024), ch=Math.round(cw*(img.height||1024)/(img.width||1024));
+    const cv=document.createElement('canvas');cv.width=cw;cv.height=ch; const cx=cv.getContext('2d',{willReadFrequently:true});
+    try{ cx.drawImage(img,0,0,cw,ch);
+      const data=cx.getImageData(0,0,cw,ch).data; const flip=tex.flipY;
+      for(let i=0;i<N;i++){ let u=uv.getX(i),v=uv.getY(i); u-=Math.floor(u); v-=Math.floor(v);
+        const cxp=Math.min(cw-1,Math.max(0,(u*cw)|0)),cyp=Math.min(ch-1,Math.max(0,((flip?1-v:v)*ch)|0));
+        let sr=0,sg=0,sb=0,n=0;
+        for(let dy=-2;dy<=2;dy++)for(let dx=-2;dx<=2;dx++){const xx=cxp+dx,yy=cyp+dy;if(xx<0||yy<0||xx>=cw||yy>=ch)continue;const o=(yy*cw+xx)*4;sr+=data[o];sg+=data[o+1];sb+=data[o+2];n++;}
+        g[i]=classifyRGB(sr/n,sg/n,sb/n); counts[g[i]]++;
+      }
+    }catch(e){}
   }
-  groups=g; mainMesh=mesh; lastCounts=counts;
   mesh.geometry.setAttribute('color',new R.BufferAttribute(new Float32Array(N*3),3));
-  const om=originals.get(mesh); if(om){om.vertexColors=true;}   // enable texture×vertex multiply (black wall)
-  buildRouteUI(counts);
+  if(mat) mat.vertexColors=true;
+  return {groups:g,counts};
 }
-function buildBlackWall(){   // wall → near black, holds keep full texture (map × vertexColor)
-  if(!mainMesh||!groups) return; const arr=mainMesh.geometry.attributes.color.array;
-  for(let i=0;i<groups.length;i++){ const c=(groups[i]===0)?0.06:1.0; arr[i*3]=c;arr[i*3+1]=c;arr[i*3+2]=c; }
-  mainMesh.geometry.attributes.color.needsUpdate=true;
-}
-function buildHighlight(){
-  if(!mainMesh||!groups) return; const arr=mainMesh.geometry.attributes.color.array;
-  const tgt=GID[activeColor];
-  for(let i=0;i<groups.length;i++){ const gid=groups[i]; let c;
-    if(activeColor==='all'){ c=IDCOL[gid]; }
-    else if(activeColor==='black'){ c=(gid===0)?IDCOL[0]:DIM; }   // show wall/structure, dim colour holds
-    else if(gid===tgt){ c=IDCOL[gid]; }
-    else if(filterMode==='dim'&&gid!==0){ c=DIM; }
-    else { c=IDCOL[0]; }
-    arr[i*3]=c[0];arr[i*3+1]=c[1];arr[i*3+2]=c[2];
-  }
-  mainMesh.geometry.attributes.color.needsUpdate=true;
-}
+function forEachPart(fn){ parts.forEach(fn); }
+function buildBlackWall(){ forEachPart(p=>{ const a=p.mesh.geometry.attributes.color.array,g=p.groups;
+  for(let i=0;i<g.length;i++){ const c=(g[i]===0)?0.06:1.0; a[i*3]=c;a[i*3+1]=c;a[i*3+2]=c; } p.mesh.geometry.attributes.color.needsUpdate=true; }); }
+function buildHighlight(){ const tgt=GID[activeColor]; forEachPart(p=>{ const a=p.mesh.geometry.attributes.color.array,g=p.groups;
+  for(let i=0;i<g.length;i++){ const gid=g[i]; let c;
+    if(activeColor==='all') c=IDCOL[gid];
+    else if(activeColor==='black') c=(gid===0)?IDCOL[0]:DIM;
+    else if(gid===tgt) c=IDCOL[gid];
+    else if(filterMode==='dim'&&gid!==0) c=DIM;
+    else c=IDCOL[0];
+    a[i*3]=c[0];a[i*3+1]=c[1];a[i*3+2]=c[2]; } p.mesh.geometry.attributes.color.needsUpdate=true; }); }
 function apply(){
-  if(!model) return;
-  if(activeColor){ buildHighlight(); model.traverse(o=>{if(o.isMesh)o.material=(o===mainMesh)?hlMat:clayMat;}); }
-  else if(curMode==='clay'){ model.traverse(o=>{if(o.isMesh)o.material=clayMat;}); }
-  else { buildBlackWall(); model.traverse(o=>{if(o.isMesh)o.material=originals.get(o);}); }
+  if(!parts.length) return;
+  if(activeColor){ buildHighlight(); forEachPart(p=>{p.mesh.material=hlMat;}); }
+  else if(curMode==='clay'){ forEachPart(p=>{p.mesh.material=clayMat;}); }
+  else { buildBlackWall(); forEachPart(p=>{p.mesh.material=p.mat;}); }
 }
 
+/* ---- welded layout: place each reconstructed face to rebuild the bay ---- */
 const SECTIONS=[
-  {id:'prow', name:'Prow wall',      sub:'yellow-volume face',    file:'meshy.glb',   yaw:0,   rx:0},
-  {id:'sec2', name:'Green face',     sub:'green / blue / grey',   file:'section2.glb',yaw:0,   rx:PI/2},
-  {id:'left', name:'Left wall',      sub:'stacked yellow · pink', file:'leftwall.glb',yaw:0,   rx:0},
-  {id:'tri',  name:'Triangle bay',   sub:'grey volumes · blue',   file:'trisec.glb',  yaw:0,   rx:0},
-  {id:'sec3', name:'Corner face',    sub:'green / yellow / blue', file:'section3.glb',yaw:0,   rx:PI/2},
+  {id:'left', name:'Left wall',    file:'leftwall.glb',rx:0,    ry: 0.55, x:-12.5, z:-1.8},
+  {id:'tri',  name:'Triangle bay', file:'trisec.glb',  rx:0,    ry: 0.24, x:-6.7,  z:-0.4},
+  {id:'prow', name:'Prow wall',    file:'meshy.glb',   rx:0,    ry: 0.0,  x: 0.2,  z: 1.0},
+  {id:'sec2', name:'Green face',   file:'section2.glb',rx:PI/2, ry:-0.24, x: 6.9,  z:-0.4},
+  {id:'sec3', name:'Corner face',  file:'section3.glb',rx:0,    ry:-0.55, x:12.8,  z:-1.8},
 ];
-const secEl=document.getElementById('sections');
-SECTIONS.forEach((s,i)=>{const el=document.createElement('div');el.className='sitem'+(i===0?' on':'');
-  el.innerHTML=`<span class="d"></span><div>${s.name}<small>${s.sub}</small></div>`;
-  el.onclick=()=>{document.querySelectorAll('.sitem').forEach(x=>x.classList.toggle('on',x===el));activeColor=null;flagEl.style.display='none';loadSection(s);};
-  secEl.appendChild(el);});
-
-function loadSection(sec){
-  document.getElementById('loading').style.display='flex';
-  if(model){ scene.remove(model); model.traverse(o=>{if(o.isMesh)o.geometry?.dispose();}); originals.clear(); }
+const TARGET_H=7;
+function addPart(sec){ return new Promise(res=>{
   new GLTFLoader().load(sec.file,gl=>{
-    model=gl.scene; let big=null,bm=0;
-    model.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;originals.set(o,o.material);
-      if(o.material)o.material.roughness=Math.min(1,o.material.roughness??.8);
-      const cnt=o.geometry.attributes.position.count; if(cnt>bm){bm=cnt;big=o;}}});
-    model.rotation.set(sec.rx||0, sec.yaw||0, 0);
-    let b=new R.Box3().setFromObject(model); let sz=b.getSize(new R.Vector3()); model.scale.setScalar(6/Math.max(sz.x,sz.y,sz.z));
-    b=new R.Box3().setFromObject(model); const c=b.getCenter(new R.Vector3()),mn=b.min; model.position.sub(new R.Vector3(c.x,mn.y,c.z));
-    scene.add(model);
-    b=new R.Box3().setFromObject(model); const ctr=b.getCenter(new R.Vector3()); sz=b.getSize(new R.Vector3()); const r=Math.max(sz.x,sz.y);
-    key.target.position.copy(ctr); if(!key.target.parent)scene.add(key.target);
-    HOME={pos:new R.Vector3(ctr.x+r*0.42,ctr.y+sz.y*0.14,ctr.z+r*1.28),tgt:ctr.clone()};
-    camera.position.copy(HOME.pos); controls.target.copy(HOME.tgt); camera.near=r/200; camera.far=r*30; camera.updateProjectionMatrix();
-    classify(big); apply();
-    document.getElementById('loading').style.display='none';
-  },undefined,()=>{document.getElementById('loading').textContent='Could not load model.';});
+    const inner=gl.scene; let big=null,bm=0,mat=null;
+    inner.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true; if(o.material)o.material.roughness=Math.min(1,o.material.roughness??.8);
+      const cnt=o.geometry.attributes.position.count; if(cnt>bm){bm=cnt;big=o;mat=o.material;}}});
+    inner.rotation.x=sec.rx||0;                                   // stand the panel upright, facing +Z
+    let b=new R.Box3().setFromObject(inner); let sz=b.getSize(new R.Vector3()); inner.scale.setScalar(TARGET_H/sz.y);
+    b=new R.Box3().setFromObject(inner); const c=b.getCenter(new R.Vector3()),mn=b.min;
+    inner.position.sub(new R.Vector3(c.x, mn.y, c.z));            // centre x/z, bottom on y=0
+    const outer=new R.Group(); outer.add(inner);                 // yaw + place as a whole (no tilt)
+    outer.rotation.y=sec.ry||0; outer.position.set(sec.x, 0, sec.z);
+    scene.add(outer);
+    const cl=classify(big,mat);
+    parts.push({group:outer,mesh:big,mat,groups:cl.groups,counts:cl.counts,sec}); res();
+  },undefined,()=>res()); }); }
+
+async function loadAll(){
+  document.getElementById('loading').style.display='flex';
+  for(const s of SECTIONS){ await addPart(s); }   // sequential = steadier memory
+  // aggregate counts across all faces
+  const tot=[0,0,0,0,0,0]; parts.forEach(p=>p.counts.forEach((n,i)=>tot[i]+=n)); lastCounts=tot;
+  // fit camera to the whole welded wall
+  const box=new R.Box3(); parts.forEach(p=>box.expandByObject(p.group));
+  const ctr=box.getCenter(new R.Vector3()), sz=box.getSize(new R.Vector3()); const r=Math.max(sz.x,sz.y);
+  key.target.position.copy(ctr); if(!key.target.parent)scene.add(key.target);
+  HOME={pos:new R.Vector3(ctr.x, ctr.y+sz.y*0.10, ctr.z+r*1.15), tgt:ctr.clone(), sec:null};
+  camera.position.copy(HOME.pos); controls.target.copy(HOME.tgt); camera.near=r/300; camera.far=r*40; camera.updateProjectionMatrix();
+  buildRouteUI(tot); apply();
+  document.getElementById('loading').style.display='none';
 }
+
+/* section list = focus camera on a face (or whole wall) */
+const secEl=document.getElementById('sections');
+function focusPart(p,el){ document.querySelectorAll('.sitem').forEach(x=>x.classList.toggle('on',x===el));
+  if(!p){ if(HOME){camera.position.copy(HOME.pos);controls.target.copy(HOME.tgt);} return; }
+  const b=new R.Box3().setFromObject(p.group); const ctr=b.getCenter(new R.Vector3()),sz=b.getSize(new R.Vector3()); const r=Math.max(sz.x,sz.y);
+  controls.target.copy(ctr); camera.position.set(ctr.x, ctr.y+sz.y*0.1, ctr.z+r*1.25); }
+function buildSectionUI(){ secEl.innerHTML='';
+  const all=document.createElement('div');all.className='sitem on';all.innerHTML=`<span class="d"></span><div>Whole wall<small>all faces welded</small></div>`;
+  all.onclick=()=>focusPart(null,all); secEl.appendChild(all);
+  SECTIONS.forEach(s=>{const p=parts.find(pp=>pp.sec.id===s.id); const el=document.createElement('div');el.className='sitem';
+    el.innerHTML=`<span class="d"></span><div>${s.name}<small>focus</small></div>`;
+    el.onclick=()=>focusPart(p,el); secEl.appendChild(el);}); }
 
 /* click a hold → select its colour route */
 const ray=new R.Raycaster(),mouse=new R.Vector2(); let downXY=null;
 renderer.domElement.addEventListener('pointerdown',e=>downXY=[e.clientX,e.clientY]);
 renderer.domElement.addEventListener('pointerup',e=>{ if(!downXY)return; if(Math.hypot(e.clientX-downXY[0],e.clientY-downXY[1])>6)return;
-  if(!mainMesh||!groups)return; mouse.x=(e.clientX/innerWidth)*2-1; mouse.y=-(e.clientY/innerHeight)*2+1; ray.setFromCamera(mouse,camera);
-  const hit=ray.intersectObject(mainMesh,false)[0]; if(!hit)return;
-  const f=hit.face; const gid=groups[f.a]||groups[f.b]||groups[f.c];
-  const rid=Object.keys(GID).find(k=>GID[k]===gid);
-  if(rid&&rid!=='none') pick(rid); });
+  mouse.x=(e.clientX/innerWidth)*2-1; mouse.y=-(e.clientY/innerHeight)*2+1; ray.setFromCamera(mouse,camera);
+  const hit=ray.intersectObjects(parts.map(p=>p.mesh),false)[0]; if(!hit)return;
+  const p=parts.find(pp=>pp.mesh===hit.object); if(!p)return; const f=hit.face; const gid=p.groups[f.a]||p.groups[f.b]||p.groups[f.c];
+  const rid=Object.keys(GID).find(k=>GID[k]===gid); if(rid&&rid!=='none') pick(rid); });
 
 document.getElementById('mode').onclick=e=>{const b=e.target.closest('button');if(!b)return;curMode=b.dataset.m;
   document.querySelectorAll('#mode button').forEach(x=>x.classList.toggle('on',x===b)); apply();};
@@ -238,7 +247,8 @@ document.getElementById('fmode').onclick=e=>{const b=e.target.closest('button');
   document.querySelectorAll('#fmode button').forEach(x=>x.classList.toggle('on',x===b)); if(activeColor)apply();};
 document.getElementById('btnReset').onclick=()=>{ if(HOME){camera.position.copy(HOME.pos);controls.target.copy(HOME.tgt);} };
 
-buildRouteUI(null); loadSection(SECTIONS[0]);
+buildRouteUI(null);
+loadAll().then(buildSectionUI);
 function loop(){requestAnimationFrame(loop);controls.update();renderer.render(scene,camera);} loop();
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
 </script>
