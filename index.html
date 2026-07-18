@@ -94,7 +94,7 @@ const viewer=new GS.DropInViewer({gpuAcceleratedSort:false,sharedMemoryForWorker
 scene.add(viewer);
 
 let manifest=null,routeData=null,activeColor=null,filterMode='isolate',renderMode='photo',marksOn=true,HOME=null;
-const routeScenes=new Map(),markers=[];
+const routeScenes=new Map(),routeLoads=new Map(),markers=[];
 const routeId=id=>id==='pink'||id==='purple'?'pinkpurple':id;
 
 function setView(view){
@@ -144,7 +144,32 @@ function buildRoutes(){
 }
 
 function showFlag(message){flagEl.style.display='block';flagEl.textContent='⚑ '+message;}
-function selectRoute(id){activeColor=id;flagEl.style.display='none';buildRoutes();applyView();}
+async function ensureRouteScene(id){
+  if(routeScenes.has(id))return routeScenes.get(id);
+  if(routeLoads.has(id))return routeLoads.get(id);
+  const definition=manifest.routes.find(route=>route.id===id);
+  if(!definition)throw new Error(`No overlay is available for ${id}.`);
+  showFlag(`Loading the ${definition.name} 3D overlay…`);
+  const promise=viewer.addSplatScene(definition.file,{splatAlphaRemovalThreshold:5,showLoadingUI:false,progressiveLoad:false})
+    .then(()=>{
+      const sceneIndex=viewer.getSceneCount()-1;routeScenes.set(id,sceneIndex);routeLoads.delete(id);
+      if(activeColor===id)flagEl.style.display='none';applyView();return sceneIndex;
+    }).catch(error=>{routeLoads.delete(id);throw error;});
+  routeLoads.set(id,promise);return promise;
+}
+
+async function selectRoute(id){
+  activeColor=id;flagEl.style.display='none';buildRoutes();applyView();
+  if(!id)return;
+  try{await ensureRouteScene(id);}catch(error){showFlag(`The ${id} overlay could not load. The complete photo scan remains available.`);console.error(error);}
+}
+
+async function loadAllRouteScenes(){
+  for(const route of manifest.routes){
+    try{await ensureRouteScene(route.id);}catch(error){console.error(error);}
+  }
+  if(activeColor===null)flagEl.style.display='none';applyView();
+}
 
 function applyView(){
   if(!manifest)return;
@@ -172,17 +197,18 @@ async function start(){
     fetch('routes.json').then(response=>{if(!response.ok)throw new Error('The reviewed route markers are missing.');return response.json();}),
   ]);
   buildRoutes();
-  const scenes=[{path:manifest.source,splatAlphaRemovalThreshold:5,opacity:1,visible:true},
-    ...manifest.routes.map(route=>({path:route.file,splatAlphaRemovalThreshold:5,opacity:1,visible:false}))];
-  await viewer.addSplatScenes(scenes,false,progress=>{pbar.style.width=`${Math.min(100,progress||0)}%`;});
-  manifest.routes.forEach((route,index)=>routeScenes.set(route.id,index+1));
+  await viewer.addSplatScene(manifest.source,{
+    splatAlphaRemovalThreshold:5,showLoadingUI:false,progressiveLoad:false,
+    onProgress:progress=>{pbar.style.width=`${Math.min(100,progress||0)}%`;},
+  });
   addMarkers();setView(manifest.view);applyView();
   document.getElementById('coverage').textContent=`${manifest.sourceSplats.toLocaleString()} Gaussian splats from the complete video scan · ${manifest.routes.reduce((sum,route)=>sum+route.holds,0)} reviewed hold positions.`;
   loading.style.display='none';
 }
 
 document.getElementById('mode').onclick=event=>{const button=event.target.closest('button');if(!button)return;renderMode=button.dataset.m;
-  document.querySelectorAll('#mode button').forEach(item=>item.classList.toggle('on',item===button));applyView();};
+  document.querySelectorAll('#mode button').forEach(item=>item.classList.toggle('on',item===button));applyView();
+  if(renderMode==='routes'&&activeColor===null)void loadAllRouteScenes();};
 document.getElementById('fmode').onclick=event=>{const button=event.target.closest('button');if(!button)return;filterMode=button.dataset.f;
   document.querySelectorAll('#fmode button').forEach(item=>item.classList.toggle('on',item===button));applyView();};
 document.getElementById('btnMarks').onclick=event=>{marksOn=!marksOn;event.currentTarget.classList.toggle('on',marksOn);applyView();};
