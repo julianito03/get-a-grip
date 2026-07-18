@@ -5,58 +5,62 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
 <title>Get a Grip — 3D Wall</title>
 <style>
-  :root{--bg:#eceef1;--panel2:#f4f6f8;--line:#e2e5ea;--ink:#1c1f24;--muted:#6b7280;--accent:#f2b705;
+  :root{--bg:#ffffff;--panel:#ffffff;--panel2:#f3f5f7;--line:#e6e8ec;--ink:#14171c;--muted:#6b7280;--accent:#f2b705;
     --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
   *{box-sizing:border-box}
   html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:var(--font);overflow:hidden}
   #app{position:fixed;inset:0} canvas{display:block}
-  #ui{position:absolute;top:0;left:0;height:100%;width:302px;background:rgba(255,255,255,.9);
-    border-right:1px solid var(--line);display:flex;flex-direction:column;backdrop-filter:blur(10px);z-index:10}
-  .brand{padding:20px 20px 15px;border-bottom:1px solid var(--line)}
-  .brand h1{margin:0;font-size:19px;letter-spacing:.02em;font-weight:800;display:flex;align-items:center;gap:9px}
+  #ui{position:absolute;top:0;left:0;height:100%;width:300px;background:rgba(255,255,255,.94);
+    border-right:1px solid var(--line);display:flex;flex-direction:column;backdrop-filter:blur(8px);z-index:10}
+  .brand{padding:18px 20px 13px;border-bottom:1px solid var(--line)}
+  .brand h1{margin:0;font-size:18px;letter-spacing:.02em;font-weight:800;display:flex;align-items:center;gap:9px}
   .brand h1 .dot{width:11px;height:11px;border-radius:3px;background:var(--accent)}
-  .brand p{margin:5px 0 0;font-size:12px;color:var(--muted)}
-  .scroll{flex:1;overflow-y:auto}
-  .grp{padding:15px 18px 5px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
-  .seg{display:flex;gap:6px;padding:2px 16px}
-  .seg button{flex:1;padding:9px 0;font-size:12.5px;font-weight:600;color:var(--muted);background:var(--panel2);
-    border:1px solid var(--line);border-radius:9px;cursor:pointer;transition:.15s}
-  .seg button.on{color:#111;background:#fff;border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
-  .sitem{display:flex;align-items:center;gap:10px;padding:9px 18px;margin:2px 8px;border-radius:9px;cursor:pointer;font-size:13.5px;font-weight:600}
-  .sitem:hover{background:var(--panel2)} .sitem.on{background:#fff8e6;box-shadow:0 0 0 1px var(--accent) inset}
-  .sitem .d{width:10px;height:10px;border-radius:3px;background:var(--accent);flex:0 0 auto}
-  .sitem small{display:block;font-weight:400;color:var(--muted);font-size:11px;margin-top:1px}
-  .routes{padding:4px 12px 6px}
-  .rt{display:flex;align-items:center;gap:11px;padding:9px 12px;margin:4px 0;border-radius:9px;cursor:pointer;
-    border:1px solid transparent;font-size:13.5px;font-weight:600;transition:.13s}
+  .brand p{margin:5px 0 0;font-size:11.5px;color:var(--muted)}
+  .scroll{flex:1;overflow-y:auto;padding-bottom:8px}
+  .grp{padding:14px 18px 5px;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  .routes{padding:2px 12px 4px}
+  .rt{display:flex;align-items:center;gap:11px;padding:8px 12px;margin:3px 0;border-radius:9px;cursor:pointer;
+    border:1px solid transparent;font-size:13.5px;font-weight:600;transition:.12s}
   .rt:hover{background:var(--panel2)} .rt.on{background:#fff;border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
-  .rt .sw{width:18px;height:18px;border-radius:5px;flex:0 0 auto;box-shadow:0 0 0 2px rgba(0,0,0,.06)}
-  .rt .ct{margin-left:auto;font-size:11.5px;color:var(--muted);font-weight:600}
-  .row{display:flex;align-items:center;justify-content:space-between;padding:8px 18px;font-size:13px}
-  .hint{padding:12px 20px;border-top:1px solid var(--line);font-size:11.5px;color:var(--muted);line-height:1.5}
-  .hint a{color:var(--muted)}
+  .rt.flag{opacity:.6}
+  .rt .sw{width:17px;height:17px;border-radius:5px;flex:0 0 auto;box-shadow:0 0 0 2px rgba(0,0,0,.07)}
+  .rt .ct{margin-left:auto;font-size:11px;color:var(--muted);font-weight:600}
+  .seg{display:flex;gap:6px;padding:2px 16px}
+  .seg button{flex:1;padding:8px 0;font-size:12px;font-weight:600;color:var(--muted);background:var(--panel2);
+    border:1px solid var(--line);border-radius:9px;cursor:pointer;transition:.13s}
+  .seg button.on{color:#111;background:#fff;border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+  .sitem{display:flex;align-items:center;gap:10px;padding:8px 18px;margin:2px 8px;border-radius:9px;cursor:pointer;font-size:13px;font-weight:600}
+  .sitem:hover{background:var(--panel2)} .sitem.on{background:#fff8e6;box-shadow:0 0 0 1px var(--accent) inset}
+  .sitem .d{width:9px;height:9px;border-radius:3px;background:var(--accent);flex:0 0 auto}
+  .flagmsg{margin:6px 16px;padding:9px 11px;border-radius:8px;background:#fff6e0;border:1px solid #f0d98a;font-size:11.5px;color:#7a5c00;line-height:1.45;display:none}
+  .hint{padding:11px 18px;border-top:1px solid var(--line);font-size:11px;color:var(--muted);line-height:1.5}
+  #topbar{position:absolute;top:14px;right:14px;display:flex;gap:8px;z-index:10}
+  #topbar button{padding:9px 13px;font-size:12.5px;font-weight:600;color:var(--ink);background:rgba(255,255,255,.94);
+    border:1px solid var(--line);border-radius:9px;cursor:pointer}
+  #topbar button:hover{border-color:#cfd4db}
   #loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:var(--bg);z-index:50;color:var(--muted);font-size:14px}
-  @media(max-width:720px){#ui{width:100%;height:auto;max-height:44%;bottom:0;top:auto;border-right:none;border-top:1px solid var(--line)}}
+  @media(max-width:720px){#ui{width:100%;height:auto;max-height:46%;bottom:0;top:auto;border-right:none;border-top:1px solid var(--line)}}
 </style>
 </head>
 <body>
 <div id="app"></div>
 <div id="loading">Loading 3D wall…</div>
 <div id="ui">
-  <div class="brand"><h1><span class="dot"></span>GET A GRIP</h1><p>Reconstructed 3D wall</p></div>
+  <div class="brand"><h1><span class="dot"></span>GET A GRIP</h1><p>Boulder wall · 3D route viewer</p></div>
   <div class="scroll">
-    <div class="grp">Routes · by colour</div>
+    <div class="grp">Routes</div>
     <div class="routes" id="routes"></div>
+    <div class="flagmsg" id="flag"></div>
+    <div class="grp">Filter mode</div>
+    <div class="seg" id="fmode"><button data-f="isolate" class="on">Isolate</button><button data-f="dim">Dim others</button></div>
+    <div class="grp">Render</div>
+    <div class="seg" id="mode"><button data-m="tex" class="on">Photoreal</button><button data-m="clay">Clay</button></div>
     <div class="grp">Wall section</div>
     <div id="sections"></div>
-    <div class="grp">Render</div>
-    <div class="seg" id="mode"><button data-m="clay" class="on">Clay</button><button data-m="tex">Textured</button></div>
-    <div class="grp">View</div>
-    <div class="seg" id="spin"><button data-s="1">Auto-rotate</button><button data-s="0" class="on">Manual</button></div>
-    <div class="row">Wireframe <input type="checkbox" id="wire"></div>
   </div>
-  <div class="hint">Solid mesh reconstructed from the wall photo. Pick a colour to light up that route on the geometry. · <a href="splat.html">photoreal scan ›</a></div>
+  <div class="hint">Real 3D reconstruction. Drag = orbit · right-drag = pan · scroll = zoom. Pick a colour to filter that route.</div>
 </div>
+<div id="topbar"><button id="btnReset">Reset view</button></div>
 
 <script type="importmap">
 { "imports": {
@@ -71,76 +75,74 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 const R=THREE, PI=Math.PI;
 
-const scene=new R.Scene();
-// soft vertical gradient background
-(function(){const c=document.createElement('canvas');c.width=2;c.height=256;const x=c.getContext('2d');
-  const g=x.createLinearGradient(0,0,0,256);g.addColorStop(0,'#f4f6f9');g.addColorStop(1,'#dfe3e9');x.fillStyle=g;x.fillRect(0,0,2,256);
-  const t=new R.CanvasTexture(c);t.colorSpace=R.SRGBColorSpace;scene.background=t;})();
-
+const scene=new R.Scene(); scene.background=new R.Color(0xffffff);
 const renderer=new R.WebGLRenderer({antialias:true}); renderer.setPixelRatio(Math.min(devicePixelRatio,2));
 renderer.setSize(innerWidth,innerHeight); renderer.shadowMap.enabled=true; renderer.shadowMap.type=R.PCFSoftShadowMap;
-renderer.toneMapping=R.ACESFilmicToneMapping; renderer.toneMappingExposure=1.02; document.getElementById('app').appendChild(renderer.domElement);
+renderer.toneMapping=R.ACESFilmicToneMapping; renderer.toneMappingExposure=1.05; document.getElementById('app').appendChild(renderer.domElement);
 const pmrem=new R.PMREMGenerator(renderer); scene.environment=pmrem.fromScene(new RoomEnvironment(),0.03).texture;
 
-const camera=new R.PerspectiveCamera(40,innerWidth/innerHeight,0.01,1000);
+const camera=new R.PerspectiveCamera(42,innerWidth/innerHeight,0.01,1000);
 const controls=new OrbitControls(camera,renderer.domElement); controls.enableDamping=true; controls.dampingFactor=.08;
-controls.minDistance=0.3; controls.maxPolarAngle=PI*0.58;
+controls.enablePan=true; controls.minDistance=0.3; controls.maxPolarAngle=PI*0.62;
 
-scene.add(new R.HemisphereLight(0xffffff,0x9aa2b0,.85));
-const key=new R.DirectionalLight(0xfff4e2,2.5); key.position.set(-5,10,7); key.castShadow=true;
-key.shadow.mapSize.set(2048,2048); key.shadow.bias=-0.0003; key.shadow.normalBias=0.03; key.shadow.radius=6;
+// neutral studio lighting
+scene.add(new R.HemisphereLight(0xffffff,0xdfe3ea,.85));
+const key=new R.DirectionalLight(0xffffff,2.3); key.position.set(-5,9,7); key.castShadow=true;
+key.shadow.mapSize.set(2048,2048); key.shadow.bias=-0.0003; key.shadow.normalBias=0.03; key.shadow.radius=7;
 key.shadow.camera.near=0.1; key.shadow.camera.far=80; scene.add(key);
-const fill=new R.DirectionalLight(0xeaf1ff,1.1); fill.position.set(6,3,9); scene.add(fill);
-const rim=new R.DirectionalLight(0xfff1de,.9); rim.position.set(8,6,-4); scene.add(rim);
+const fill=new R.DirectionalLight(0xf2f6ff,1.0); fill.position.set(6,4,9); scene.add(fill);
+const rim=new R.DirectionalLight(0xffffff,.6); rim.position.set(7,5,-5); scene.add(rim);
 
-let ground;
-const clayMat=new R.MeshStandardMaterial({color:0x9ba1a9,roughness:.68,metalness:.02,envMapIntensity:.7});
-const hlMat=new R.MeshStandardMaterial({vertexColors:true,roughness:.55,metalness:.02,envMapIntensity:.7});
-let HOME=null, model=null, mainMesh=null, groups=null, curMode='clay', wireOn=false, activeColor=null;
+// soft shadow-catcher (invisible except shadow) on white bg
+let ground=new R.Mesh(new R.PlaneGeometry(400,400), new R.ShadowMaterial({opacity:.22}));
+ground.rotation.x=-PI/2; ground.receiveShadow=true; scene.add(ground);
+
+const clayMat=new R.MeshStandardMaterial({color:0x9ba1a9,roughness:.66,metalness:.02,envMapIntensity:.7});
+const hlMat=new R.MeshStandardMaterial({vertexColors:true,roughness:.5,metalness:.02,envMapIntensity:.8});
+let HOME=null, model=null, mainMesh=null, groups=null, curMode='tex', activeColor=null, filterMode='isolate';
 const originals=new Map();
 
-/* ---- routes (colour) ---- */
+/* ---- route colours (material groups) ---- */
 const ROUTES=[
-  {id:'yellow',name:'Yellow',hex:0xf1c40f}, {id:'green',name:'Green',hex:0x5bbf3f},
-  {id:'blue',name:'Blue',hex:0x3f7ec4},     {id:'purple',name:'Purple',hex:0x8f5bb0},
-  {id:'tan',name:'Tan / Wood',hex:0xbf9a5e},
+  {id:'yellow',name:'Yellow',hex:0xf2c40c},{id:'green',name:'Green',hex:0x33c21f},
+  {id:'blue',name:'Blue',hex:0x2276e8},{id:'pinkpurple',name:'Pink / Purple',hex:0xd23fae},
+  {id:'beigegrey',name:'Beige / Grey',hex:0xc9b892,flag:'Beige/wood holds are detected. Pure-grey holds share the wall’s colour, so they can’t be colour-separated from a photo texture (flagged, not invented) — they’d need per-object geometry.'},{id:'black',name:'Black',hex:0x222428,flag:'Black volumes are the same colour as the wall, so they can’t be colour-separated from a photo texture — this needs geometric segmentation (flagged, not invented).'},
 ];
-const GID={none:0,yellow:1,green:2,blue:3,purple:4,tan:5};
-const IDCOL=[[0.48,0.49,0.53],[1.0,0.78,0.03],[0.32,0.80,0.20],[0.20,0.50,0.85],[0.60,0.30,0.80],[0.78,0.58,0.30]];
-function rgb2hsv(r,g,b){ r/=255;g/=255;b/=255;
-  const mx=Math.max(r,g,b),mn=Math.min(r,g,b),d=mx-mn; let h=0;
+const GID={none:0,yellow:1,green:2,blue:3,pinkpurple:4,beigegrey:5};
+const IDCOL=[[0.03,0.03,0.035],[1.0,0.80,0.0],[0.20,0.82,0.14],[0.10,0.46,0.95],[0.86,0.24,0.66],[0.84,0.75,0.58]];
+const DIM=[0.42,0.42,0.45];
+function rgb2hsv(r,g,b){ r/=255;g/=255;b/=255; const mx=Math.max(r,g,b),mn=Math.min(r,g,b),d=mx-mn; let h=0;
   if(d>1e-6){ if(mx===r)h=((g-b)/d)%6; else if(mx===g)h=(b-r)/d+2; else h=(r-g)/d+4; h*=60; if(h<0)h+=360; }
-  return [h, mx<=0?0:d/mx, mx];
-}
-function classifyRGB(Rr,Gg,Bb){
-  const [h,s,v]=rgb2hsv(Rr,Gg,Bb);
-  if(v<0.23) return 0;                                     // dark wall / shadow
-  if(h>=40&&h<=68&&s>=0.42&&v>=0.50) return GID.yellow;    // bright saturated yellow
-  if(h>=66&&h<=168&&s>=0.20&&v>=0.22) return GID.green;
-  if(h>=170&&h<=256&&s>=0.15&&v>=0.18) return GID.blue;    // blue incl teal
-  if(h>256&&h<=322&&s>=0.13&&v>=0.16) return GID.purple;
-  if(h>=16&&h<=54&&s>=0.15&&s<0.60&&v>=0.30) return GID.tan; // warm wood, lower sat than yellow
-  return 0;                                                // grey / wall
-}
-const routesEl=document.getElementById('routes');
+  return [h, mx<=0?0:d/mx, mx]; }
+function classifyRGB(Rr,Gg,Bb){ const [h,s,v]=rgb2hsv(Rr,Gg,Bb);
+  if(v<0.23) return 0;
+  if(h>=40&&h<=68&&s>=0.42&&v>=0.50) return GID.yellow;
+  if(h>=66&&h<=170&&s>=0.20&&v>=0.22) return GID.green;
+  if(h>=170&&h<=256&&s>=0.15&&v>=0.18) return GID.blue;
+  if(h>=256&&h<=346&&s>=0.14&&v>=0.18) return GID.pinkpurple;
+  if(h>=15&&h<=52&&s>=0.16&&s<0.55&&v>=0.32&&v<=0.86) return GID.beigegrey;  // warm beige/wood holds
+  return 0; }   // note: neutral-grey holds share the wall's colour → not colour-separable (flagged)
+
+const routesEl=document.getElementById('routes'), flagEl=document.getElementById('flag');
 function buildRouteUI(counts){
   routesEl.innerHTML='';
-  const all=document.createElement('div');all.className='rt'+(activeColor==='all'?' on':'');all.dataset.id='all';
-  all.innerHTML=`<span class="sw" style="background:linear-gradient(90deg,#f1c40f,#5bbf3f,#3f7ec4,#8f5bb0)"></span>All routes`;
+  const all=document.createElement('div');all.className='rt'+(activeColor==='all'?' on':'');
+  all.innerHTML=`<span class="sw" style="background:conic-gradient(#f2c40c,#33c21f,#2276e8,#d23fae,#c9b892,#f2c40c)"></span>All routes`;
   all.onclick=()=>pick('all'); routesEl.appendChild(all);
-  ROUTES.forEach(r=>{const el=document.createElement('div');el.className='rt'+(activeColor===r.id?' on':'');el.dataset.id=r.id;
-    const c=counts?counts[GID[r.id]]:0;
+  ROUTES.forEach(r=>{const el=document.createElement('div');el.className='rt'+(activeColor===r.id?' on':'')+(r.flag?' flag':'');
+    const c=counts&&GID[r.id]!==undefined?counts[GID[r.id]]:0;
     el.innerHTML=`<span class="sw" style="background:#${r.hex.toString(16).padStart(6,'0')}"></span>${r.name}<span class="ct">${c||''}</span>`;
     el.onclick=()=>pick(r.id); routesEl.appendChild(el);});
 }
-function pick(id){ activeColor=(activeColor===id)?null:id; buildRouteUI(lastCounts); apply(); }
+function pick(id){ activeColor=(activeColor===id)?null:id;
+  const r=ROUTES.find(x=>x.id===activeColor);
+  flagEl.style.display=(r&&r.flag)?'block':'none'; if(r&&r.flag)flagEl.textContent='⚑ '+r.flag;
+  buildRouteUI(lastCounts); apply(); }
 let lastCounts=null;
 
-/* ---- classify a mesh's vertices by texture colour ---- */
 function classify(mesh){
   groups=null; mainMesh=null; lastCounts=null;
-  const tex=originals.get(mesh)&&originals.get(mesh).map;
-  const uv=mesh.geometry.attributes.uv;
+  const tex=originals.get(mesh)&&originals.get(mesh).map; const uv=mesh.geometry.attributes.uv;
   if(!tex||!tex.image||!uv){ buildRouteUI(null); return; }
   const img=tex.image; const cw=Math.min(2048,img.width||1024), ch=Math.round(cw*(img.height||1024)/(img.width||1024));
   const cv=document.createElement('canvas');cv.width=cw;cv.height=ch;
@@ -149,14 +151,10 @@ function classify(mesh){
   const data=cx.getImageData(0,0,cw,ch).data;
   const N=mesh.geometry.attributes.position.count; const g=new Uint8Array(N);
   const flip=tex.flipY; const counts=[0,0,0,0,0,0];
-  for(let i=0;i<N;i++){
-    let u=uv.getX(i),v=uv.getY(i); u-=Math.floor(u); v-=Math.floor(v);
-    const cxp=Math.min(cw-1,Math.max(0,(u*cw)|0)); const cyp=Math.min(ch-1,Math.max(0,((flip?1-v:v)*ch)|0));
-    let sr=0,sg=0,sb=0,n=0;                               // 5x5 neighbourhood average → stable colour
-    for(let dy=-2;dy<=2;dy++)for(let dx=-2;dx<=2;dx++){
-      const xx=cxp+dx,yy=cyp+dy; if(xx<0||yy<0||xx>=cw||yy>=ch)continue;
-      const o=(yy*cw+xx)*4; sr+=data[o];sg+=data[o+1];sb+=data[o+2];n++;
-    }
+  for(let i=0;i<N;i++){ let u=uv.getX(i),v=uv.getY(i); u-=Math.floor(u); v-=Math.floor(v);
+    const cxp=Math.min(cw-1,Math.max(0,(u*cw)|0)),cyp=Math.min(ch-1,Math.max(0,((flip?1-v:v)*ch)|0));
+    let sr=0,sg=0,sb=0,n=0;
+    for(let dy=-2;dy<=2;dy++)for(let dx=-2;dx<=2;dx++){const xx=cxp+dx,yy=cyp+dy;if(xx<0||yy<0||xx>=cw||yy>=ch)continue;const o=(yy*cw+xx)*4;sr+=data[o];sg+=data[o+1];sb+=data[o+2];n++;}
     g[i]=classifyRGB(sr/n,sg/n,sb/n); counts[g[i]]++;
   }
   groups=g; mainMesh=mesh; lastCounts=counts;
@@ -164,71 +162,70 @@ function classify(mesh){
   buildRouteUI(counts);
 }
 function buildHighlight(){
-  if(!mainMesh||!groups) return; const col=mainMesh.geometry.attributes.color; const arr=col.array;
-  for(let i=0;i<groups.length;i++){ const gid=groups[i];
-    let c;
-    if(activeColor==='all') c=IDCOL[gid];
-    else c=(gid===GID[activeColor])?IDCOL[gid]:IDCOL[0];
+  if(!mainMesh||!groups) return; const arr=mainMesh.geometry.attributes.color.array;
+  const tgt=GID[activeColor];
+  for(let i=0;i<groups.length;i++){ const gid=groups[i]; let c;
+    if(activeColor==='all'){ c=IDCOL[gid]; }
+    else if(activeColor==='black'){ c=(gid===0)?IDCOL[0]:DIM; }   // show wall/structure, dim colour holds
+    else if(gid===tgt){ c=IDCOL[gid]; }
+    else if(filterMode==='dim'&&gid!==0){ c=DIM; }
+    else { c=IDCOL[0]; }
     arr[i*3]=c[0];arr[i*3+1]=c[1];arr[i*3+2]=c[2];
   }
-  col.needsUpdate=true;
+  mainMesh.geometry.attributes.color.needsUpdate=true;
 }
-
-/* ---- sections ---- */
-const SECTIONS=[
-  {id:'prow',   name:'Prow wall',      sub:'clean · head-on photo', file:'meshy.glb',    yaw:0},
-];
-const secEl=document.getElementById('sections');
-SECTIONS.forEach((s,i)=>{const el=document.createElement('div');el.className='sitem'+(i===0?' on':'');el.dataset.id=s.id;
-  el.innerHTML=`<span class="d"></span><div><div>${s.name}</div><small>${s.sub}</small></div>`;
-  el.onclick=()=>{document.querySelectorAll('.sitem').forEach(x=>x.classList.toggle('on',x===el)); activeColor=null; loadSection(s);};
-  secEl.appendChild(el);});
-
 function apply(){
   if(!model) return;
   if(activeColor){ buildHighlight(); model.traverse(o=>{if(o.isMesh)o.material=(o===mainMesh)?hlMat:clayMat;}); }
   else model.traverse(o=>{if(o.isMesh)o.material=(curMode==='clay')?clayMat:originals.get(o);});
-  model.traverse(o=>{if(o.isMesh&&o.material)o.material.wireframe=wireOn;});
 }
 
+const SECTIONS=[{id:'prow',name:'Prow wall',sub:'reconstructed',file:'meshy.glb',yaw:0}];
+const secEl=document.getElementById('sections');
+SECTIONS.forEach((s,i)=>{const el=document.createElement('div');el.className='sitem'+(i===0?' on':'');
+  el.innerHTML=`<span class="d"></span><div>${s.name}</div>`;
+  el.onclick=()=>{document.querySelectorAll('.sitem').forEach(x=>x.classList.toggle('on',x===el));activeColor=null;flagEl.style.display='none';loadSection(s);};
+  secEl.appendChild(el);});
+
 function loadSection(sec){
-  const file=sec.file;
-  document.getElementById('loading').style.display='flex'; document.getElementById('loading').textContent='Loading 3D wall…';
+  document.getElementById('loading').style.display='flex';
   if(model){ scene.remove(model); model.traverse(o=>{if(o.isMesh)o.geometry?.dispose();}); originals.clear(); }
-  new GLTFLoader().load(file,gl=>{
-    model=gl.scene; let biggest=null,bmax=0;
-    model.traverse(o=>{ if(o.isMesh){ o.castShadow=true; o.receiveShadow=true; originals.set(o,o.material);
-      const cnt=o.geometry.attributes.position.count; if(cnt>bmax){bmax=cnt;biggest=o;} } });
+  new GLTFLoader().load(sec.file,gl=>{
+    model=gl.scene; let big=null,bm=0;
+    model.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;originals.set(o,o.material);
+      if(o.material)o.material.roughness=Math.min(1,o.material.roughness??.8);
+      const cnt=o.geometry.attributes.position.count; if(cnt>bm){bm=cnt;big=o;}}});
     model.rotation.y=sec.yaw||0;
-    let box=new R.Box3().setFromObject(model); let s2=box.getSize(new R.Vector3());
-    model.scale.setScalar(6/Math.max(s2.x,s2.y,s2.z));
-    box=new R.Box3().setFromObject(model); const c2=box.getCenter(new R.Vector3()); const min2=box.min;
-    model.position.sub(new R.Vector3(c2.x,min2.y,c2.z));
+    let b=new R.Box3().setFromObject(model); let sz=b.getSize(new R.Vector3()); model.scale.setScalar(6/Math.max(sz.x,sz.y,sz.z));
+    b=new R.Box3().setFromObject(model); const c=b.getCenter(new R.Vector3()),mn=b.min; model.position.sub(new R.Vector3(c.x,mn.y,c.z));
     scene.add(model);
-    const b=new R.Box3().setFromObject(model); const ctr=b.getCenter(new R.Vector3()); const sz=b.getSize(new R.Vector3());
-    const r=Math.max(sz.x,sz.y);
-    if(!ground){ ground=new R.Mesh(new R.PlaneGeometry(400,400),new R.MeshStandardMaterial({color:0xe7eaee,roughness:.97}));
-      ground.rotation.x=-PI/2; ground.receiveShadow=true; scene.add(ground); }
+    b=new R.Box3().setFromObject(model); const ctr=b.getCenter(new R.Vector3()); sz=b.getSize(new R.Vector3()); const r=Math.max(sz.x,sz.y);
     key.target.position.copy(ctr); if(!key.target.parent)scene.add(key.target);
-    HOME={pos:new R.Vector3(ctr.x+r*0.5,ctr.y+sz.y*0.16,ctr.z+r*1.3),tgt:ctr.clone()};
-    camera.position.copy(HOME.pos); controls.target.copy(HOME.tgt);
-    camera.near=r/200; camera.far=r*30; camera.updateProjectionMatrix();
-    classify(biggest);
-    apply();
+    HOME={pos:new R.Vector3(ctr.x+r*0.42,ctr.y+sz.y*0.14,ctr.z+r*1.28),tgt:ctr.clone()};
+    camera.position.copy(HOME.pos); controls.target.copy(HOME.tgt); camera.near=r/200; camera.far=r*30; camera.updateProjectionMatrix();
+    classify(big); apply();
     document.getElementById('loading').style.display='none';
-  },undefined,()=>{document.getElementById('loading').textContent='Section not available yet.';});
+  },undefined,()=>{document.getElementById('loading').textContent='Could not load model.';});
 }
+
+/* click a hold → select its colour route */
+const ray=new R.Raycaster(),mouse=new R.Vector2(); let downXY=null;
+renderer.domElement.addEventListener('pointerdown',e=>downXY=[e.clientX,e.clientY]);
+renderer.domElement.addEventListener('pointerup',e=>{ if(!downXY)return; if(Math.hypot(e.clientX-downXY[0],e.clientY-downXY[1])>6)return;
+  if(!mainMesh||!groups)return; mouse.x=(e.clientX/innerWidth)*2-1; mouse.y=-(e.clientY/innerHeight)*2+1; ray.setFromCamera(mouse,camera);
+  const hit=ray.intersectObject(mainMesh,false)[0]; if(!hit)return;
+  const f=hit.face; const gid=groups[f.a]||groups[f.b]||groups[f.c];
+  const rid=Object.keys(GID).find(k=>GID[k]===gid);
+  if(rid&&rid!=='none') pick(rid); });
 
 document.getElementById('mode').onclick=e=>{const b=e.target.closest('button');if(!b)return;curMode=b.dataset.m;
   document.querySelectorAll('#mode button').forEach(x=>x.classList.toggle('on',x===b)); apply();};
-document.getElementById('wire').onchange=e=>{wireOn=e.target.checked; apply();};
-let spin=false;
-document.getElementById('spin').onclick=e=>{const b=e.target.closest('button');if(!b)return;spin=b.dataset.s==='1';
-  document.querySelectorAll('#spin button').forEach(x=>x.classList.toggle('on',x===b));};
+document.getElementById('fmode').onclick=e=>{const b=e.target.closest('button');if(!b)return;filterMode=b.dataset.f;
+  document.querySelectorAll('#fmode button').forEach(x=>x.classList.toggle('on',x===b)); if(activeColor)apply();};
+document.getElementById('btnReset').onclick=()=>{ if(HOME){camera.position.copy(HOME.pos);controls.target.copy(HOME.tgt);} };
 
-buildRouteUI(null);
-loadSection(SECTIONS[0]);
-function loop(){requestAnimationFrame(loop); if(spin&&model)model.rotation.y+=0.004; controls.update(); renderer.render(scene,camera);} loop();
+buildRouteUI(null); loadSection(SECTIONS[0]);
+function loop(){requestAnimationFrame(loop);controls.update();renderer.render(scene,camera);} loop();
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
 </script>
 </body>
