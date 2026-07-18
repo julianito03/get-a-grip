@@ -1,8 +1,16 @@
 # Get a Grip
 
-Interactive Three.js viewer for a photogrammetry reconstruction of a bouldering wall. The viewer keeps the wall on a white studio background, renders high-contrast route colours, and filters true 3D geometry rather than masking image pixels.
+Interactive Three.js viewer for a video-derived Gaussian reconstruction and a photogrammetry mesh of a bouldering wall. The main viewer uses the complete video scan on a white background, keeps the photographic surface intact, and overlays high-contrast 3D route labels without removing geometry.
 
-## Current model
+## Current public viewer
+
+`wall.ply` is the complete 90,261-splat video reconstruction. It includes the left wall section that is outside the current mesh capture. `splat-routes/*.ply` contains small semantic overlays generated from source colour evidence plus the reviewed 3D hold positions in `routes.json`.
+
+The original full scan always remains visible. Selecting a colour dims the base scan and adds a sharp coloured overlay at that route's reviewed 3D positions, so unselected holds never become white holes. `mesh.html` remains available as a detailed view of the partial photogrammetry mesh.
+
+Beige, neutral-grey and black holds are deliberately not guessed in the full scan. They need a reviewed 3D marker pass because their colours overlap the wall, lighting and timber.
+
+## Semantic mesh asset
 
 The build step classifies the texture of `wall_fused.glb` once. It writes a compact `route-faces.bin.gz` label map with one label for each of the original 293,423 triangles. In the browser, the viewer splits the original indexed mesh into route-aware 3D layers while sharing its precise positions, normals, UVs and embedded texture. This keeps the public download small and guarantees that filtering does not alter the source geometry.
 
@@ -34,6 +42,7 @@ Then open `http://localhost:8080`.
 ```bash
 npm install
 npm run build:model
+npm run build:splat-routes
 npm run extract:video -- video-01.mp4 video-02.mp4
 npm run validate:model
 npm test
@@ -46,6 +55,14 @@ The segmentation command reads `wall_fused.glb` and writes:
 - `route-faces.bin.gz`
 
 The original source model is retained as a reproducible input.
+
+The full-wall overlay build reads `wall.ply` and `routes.json` and writes:
+
+- `splat.manifest.json`
+- `splat-routes/route-yellow.splat`
+- `splat-routes/route-green.splat`
+- `splat-routes/route-blue.splat`
+- `splat-routes/route-pinkpurple.splat`
 
 ## Supplemental video frames
 

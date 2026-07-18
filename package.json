@@ -5,8 +5,10 @@
   "type": "module",
   "scripts": {
     "build:model": "node tools/segment-model.mjs",
+    "build:splat-routes": "node tools/build-splat-overlays.mjs",
     "extract:video": "node tools/extract-video-keyframes.mjs",
     "validate:model": "node tools/validate-model.mjs",
+    "validate:splat": "node tools/validate-splat.mjs",
     "test": "node --test tests/*.test.mjs"
   },
   "dependencies": {
