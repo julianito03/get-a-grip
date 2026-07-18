@@ -180,33 +180,44 @@ function apply(){
 }
 
 /* ---- welded layout: place each reconstructed face to rebuild the bay ---- */
-const SECTIONS=[
-  {id:'left', name:'Left wall',    file:'leftwall.glb',rx:0,    ry: 0.55, x:-12.5, z:-1.8},
-  {id:'tri',  name:'Triangle bay', file:'trisec.glb',  rx:0,    ry: 0.24, x:-6.7,  z:-0.4},
-  {id:'prow', name:'Prow wall',    file:'meshy.glb',   rx:0,    ry: 0.0,  x: 0.2,  z: 1.0},
-  {id:'sec2', name:'Green face',   file:'section2.glb',rx:PI/2, ry:-0.24, x: 6.9,  z:-0.4},
-  {id:'sec3', name:'Corner face',  file:'section3.glb',rx:0,    ry:-0.55, x:12.8,  z:-1.8},
+const SECTIONS=[   // left→right order along the wall; rx = upright correction
+  {id:'left', name:'Left wall',    file:'leftwall.glb',rx:0},
+  {id:'tri',  name:'Triangle bay', file:'trisec.glb',  rx:0},
+  {id:'prow', name:'Prow wall',    file:'meshy.glb',   rx:0},
+  {id:'sec2', name:'Green face',   file:'section2.glb',rx:PI/2},
+  {id:'sec3', name:'Corner face',  file:'section3.glb',rx:0},
 ];
-const TARGET_H=7;
+const TARGET_H=7, SEAM=-0.7, MAXYAW=0.08, ZARC=0.4;   // SEAM<0 overlaps panels to close the seam
 function addPart(sec){ return new Promise(res=>{
   new GLTFLoader().load(sec.file,gl=>{
     const inner=gl.scene; let big=null,bm=0,mat=null;
     inner.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true; if(o.material)o.material.roughness=Math.min(1,o.material.roughness??.8);
       const cnt=o.geometry.attributes.position.count; if(cnt>bm){bm=cnt;big=o;mat=o.material;}}});
-    inner.rotation.x=sec.rx||0;                                   // stand the panel upright, facing +Z
+    inner.rotation.x=sec.rx||0;                                   // stand upright, facing +Z
     let b=new R.Box3().setFromObject(inner); let sz=b.getSize(new R.Vector3()); inner.scale.setScalar(TARGET_H/sz.y);
     b=new R.Box3().setFromObject(inner); const c=b.getCenter(new R.Vector3()),mn=b.min;
     inner.position.sub(new R.Vector3(c.x, mn.y, c.z));            // centre x/z, bottom on y=0
-    const outer=new R.Group(); outer.add(inner);                 // yaw + place as a whole (no tilt)
-    outer.rotation.y=sec.ry||0; outer.position.set(sec.x, 0, sec.z);
-    scene.add(outer);
+    b=new R.Box3().setFromObject(inner); const hw=b.getSize(new R.Vector3()).x/2;
+    const outer=new R.Group(); outer.add(inner); scene.add(outer);
     const cl=classify(big,mat);
-    parts.push({group:outer,mesh:big,mat,groups:cl.groups,counts:cl.counts,sec}); res();
+    parts.push({group:outer,mesh:big,mat,groups:cl.groups,counts:cl.counts,sec,hw}); res();
   },undefined,()=>res()); }); }
+
+function layoutParts(){   // abut panels edge-to-edge, gentle bay arc
+  const ord=SECTIONS.map(s=>parts.find(p=>p.sec.id===s.id)).filter(Boolean);
+  const cx=[]; let x=0;
+  for(let i=0;i<ord.length;i++){ if(i>0) x += ord[i-1].hw + SEAM + ord[i].hw; cx.push(x); }
+  const shift=(cx[0]+cx[cx.length-1])/2; const xmax=Math.max(1e-3,...cx.map(v=>Math.abs(v-shift)));
+  ord.forEach((p,i)=>{ const X=cx[i]-shift; const t=X/xmax;
+    p.group.rotation.y = -t*MAXYAW;                 // ends turn inward
+    p.group.position.set(X, 0, -ZARC*t*t);          // centre forward, ends back
+  });
+}
 
 async function loadAll(){
   document.getElementById('loading').style.display='flex';
   for(const s of SECTIONS){ await addPart(s); }   // sequential = steadier memory
+  layoutParts();
   // aggregate counts across all faces
   const tot=[0,0,0,0,0,0]; parts.forEach(p=>p.counts.forEach((n,i)=>tot[i]+=n)); lastCounts=tot;
   // fit camera to the whole welded wall
