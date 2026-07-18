@@ -1,0 +1,4 @@
+node_modules/
+.DS_Store
+wall_semantic.glb
+capture/keyframes/
