@@ -180,12 +180,8 @@ function apply(){
 }
 
 /* ---- welded layout: place each reconstructed face to rebuild the bay ---- */
-const SECTIONS=[   // left→right order along the wall; rx = upright correction
-  {id:'left', name:'Left wall',    file:'leftwall.glb',rx:0},
-  {id:'tri',  name:'Triangle bay', file:'trisec.glb',  rx:0},
-  {id:'prow', name:'Prow wall',    file:'meshy.glb',   rx:0},
-  {id:'sec2', name:'Green face',   file:'section2.glb',rx:PI/2},
-  {id:'sec3', name:'Corner face',  file:'section3.glb',rx:0},
+const SECTIONS=[   // one fused mesh of the whole bay (both photos matched by shared blocks)
+  {id:'wall', name:'Whole wall', file:'wall_fused.glb', rx:0},
 ];
 const TARGET_H=7, SEAM=-0.7, MAXYAW=0.08, ZARC=0.4;   // SEAM<0 overlaps panels to close the seam
 function addPart(sec){ return new Promise(res=>{
@@ -224,7 +220,7 @@ async function loadAll(){
   const box=new R.Box3(); parts.forEach(p=>box.expandByObject(p.group));
   const ctr=box.getCenter(new R.Vector3()), sz=box.getSize(new R.Vector3()); const r=Math.max(sz.x,sz.y);
   key.target.position.copy(ctr); if(!key.target.parent)scene.add(key.target);
-  HOME={pos:new R.Vector3(ctr.x, ctr.y+sz.y*0.10, ctr.z+r*1.15), tgt:ctr.clone(), sec:null};
+  HOME={pos:new R.Vector3(ctr.x, ctr.y+sz.y*0.08, ctr.z+r*1.65), tgt:ctr.clone(), sec:null};
   camera.position.copy(HOME.pos); controls.target.copy(HOME.tgt); camera.near=r/300; camera.far=r*40; camera.updateProjectionMatrix();
   buildRouteUI(tot); apply();
   document.getElementById('loading').style.display='none';
@@ -237,9 +233,9 @@ function focusPart(p,el){ document.querySelectorAll('.sitem').forEach(x=>x.class
   const b=new R.Box3().setFromObject(p.group); const ctr=b.getCenter(new R.Vector3()),sz=b.getSize(new R.Vector3()); const r=Math.max(sz.x,sz.y);
   controls.target.copy(ctr); camera.position.set(ctr.x, ctr.y+sz.y*0.1, ctr.z+r*1.25); }
 function buildSectionUI(){ secEl.innerHTML='';
-  const all=document.createElement('div');all.className='sitem on';all.innerHTML=`<span class="d"></span><div>Whole wall<small>all faces welded</small></div>`;
+  const all=document.createElement('div');all.className='sitem on';all.innerHTML=`<span class="d"></span><div>Whole wall<small>single fused mesh · 2 photos</small></div>`;
   all.onclick=()=>focusPart(null,all); secEl.appendChild(all);
-  SECTIONS.forEach(s=>{const p=parts.find(pp=>pp.sec.id===s.id); const el=document.createElement('div');el.className='sitem';
+  if(parts.length>1) SECTIONS.forEach(s=>{const p=parts.find(pp=>pp.sec.id===s.id); if(!p)return; const el=document.createElement('div');el.className='sitem';
     el.innerHTML=`<span class="d"></span><div>${s.name}<small>focus</small></div>`;
     el.onclick=()=>focusPart(p,el); secEl.appendChild(el);}); }
 
