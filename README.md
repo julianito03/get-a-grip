@@ -6,7 +6,7 @@ Interactive Three.js viewer for a video-derived Gaussian reconstruction and a ph
 
 `wall.ply` is the complete 90,261-splat video reconstruction. It includes the left wall section that is outside the current mesh capture. `splat-routes/*.ply` contains small semantic overlays generated from source colour evidence plus the reviewed 3D hold positions in `routes.json`.
 
-The original full scan always remains visible. Selecting a colour dims the base scan and adds a sharp coloured overlay at that route's reviewed 3D positions, so unselected holds never become white holes. `mesh.html` remains available as a detailed view of the partial photogrammetry mesh.
+The default view (`index.html`) is the route-aware photogrammetry mesh: solid geometry with each route's holds picked out in colour. The photographic Gaussian-splat scan is available as a secondary view at `photo.html`; selecting a colour there dims the base scan and adds a sharp coloured overlay at that route's reviewed 3D positions, so unselected holds never become white holes.
 
 Beige, neutral-grey and black holds are deliberately not guessed in the full scan. They need a reviewed 3D marker pass because their colours overlap the wall, lighting and timber.
 

@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Get a Grip — Full 3D Wall</title>
+<style>
+  :root{--bg:#fff;--panel:#fff;--panel2:#f3f5f7;--line:#e6e8ec;--ink:#14171c;--muted:#6b7280;--accent:#f2b705;
+    --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:var(--font);overflow:hidden}
+  #app{position:fixed;inset:0}canvas{display:block}
+  #ui{position:absolute;top:0;left:0;height:100%;width:310px;background:rgba(255,255,255,.95);border-right:1px solid var(--line);
+    display:flex;flex-direction:column;backdrop-filter:blur(8px);z-index:10}
+  .brand{padding:18px 20px 13px;border-bottom:1px solid var(--line)}
+  .brand h1{margin:0;font-size:18px;letter-spacing:.02em;font-weight:800;display:flex;align-items:center;gap:9px}
+  .brand h1 .dot{width:11px;height:11px;border-radius:3px;background:var(--accent)}
+  .brand p{margin:5px 0 0;font-size:11.5px;color:var(--muted)}
+  .model-badge{display:inline-flex;align-items:center;gap:6px;margin-top:8px;padding:4px 7px;border-radius:6px;
+    background:#eef8f0;color:#24723a;font-size:10px;font-weight:750;letter-spacing:.04em;text-transform:uppercase}
+  .model-badge::before{content:"";width:6px;height:6px;border-radius:50%;background:#35a853}
+  .scroll{flex:1;overflow-y:auto;padding-bottom:9px}
+  .grp{padding:14px 18px 5px;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  .routes{padding:2px 12px 4px}
+  .rt{display:flex;align-items:center;gap:11px;padding:8px 12px;margin:3px 0;border-radius:9px;cursor:pointer;
+    border:1px solid transparent;font-size:13.5px;font-weight:600;transition:.12s}
+  .rt:hover{background:var(--panel2)}.rt.on{background:#fff;border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+  .rt.flag{opacity:.5;cursor:not-allowed}.rt.flag:hover{background:transparent}
+  .rt .sw{width:17px;height:17px;border-radius:5px;flex:0 0 auto;box-shadow:0 0 0 2px rgba(0,0,0,.07)}
+  .rt .ct{margin-left:auto;font-size:11px;color:var(--muted);font-weight:600}
+  .seg{display:flex;gap:6px;padding:2px 16px}
+  .seg button{flex:1;padding:8px 0;font-size:12px;font-weight:600;color:var(--muted);background:var(--panel2);
+    border:1px solid var(--line);border-radius:9px;cursor:pointer;transition:.13s}
+  .seg button.on{color:#111;background:#fff;border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+  .info{margin:4px 16px 0;padding:10px 11px;border:1px solid var(--line);border-radius:9px;font-size:11.5px;line-height:1.45;color:var(--muted)}
+  .flagmsg{margin:6px 16px;padding:9px 11px;border-radius:8px;background:#fff6e0;border:1px solid #f0d98a;
+    font-size:11.5px;color:#7a5c00;line-height:1.45;display:none}
+  .hint{padding:11px 18px;border-top:1px solid var(--line);font-size:11px;color:var(--muted);line-height:1.5}
+  #topbar{position:absolute;top:14px;right:14px;display:flex;gap:8px;z-index:10}
+  #topbar button,#topbar a{padding:9px 13px;font-size:12.5px;font-weight:600;color:var(--ink);background:rgba(255,255,255,.94);
+    border:1px solid var(--line);border-radius:9px;cursor:pointer;text-decoration:none;font-family:inherit}
+  #topbar button:hover,#topbar a:hover{border-color:#cfd4db}#topbar button.on{border-color:var(--accent)}
+  #loading{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--bg);
+    z-index:50;color:var(--muted);font-size:14px;text-align:center;line-height:1.6;padding:24px}
+  #loading .bar{width:220px;height:4px;background:#eceff2;border-radius:3px;margin-top:13px;overflow:hidden}
+  #loading .bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .2s}
+  @media(max-width:720px){#ui{width:100%;height:auto;max-height:48%;bottom:0;top:auto;border-right:none;border-top:1px solid var(--line)}
+    #topbar{top:8px;right:8px}#topbar a{display:none}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="loading">Loading complete video scan…<div class="bar"><i id="pbar"></i></div></div>
+<div id="ui">
+  <div class="brand"><h1><span class="dot"></span>GET A GRIP</h1><p>Complete boulder wall · photographic 3D viewer</p><span class="model-badge">Full video scan</span></div>
+  <div class="scroll">
+    <div class="grp">Routes</div>
+    <div class="routes" id="routes"></div>
+    <div class="flagmsg" id="flag"></div>
+    <div class="grp">Filter strength</div>
+    <div class="seg" id="fmode"><button type="button" data-f="isolate" class="on">Focus</button><button type="button" data-f="dim">Soft dim</button></div>
+    <div class="grp">Render</div>
+    <div class="seg" id="mode"><button type="button" data-m="photo" class="on">Photo texture</button><button type="button" data-m="routes">Sharper routes</button></div>
+    <div class="grp">3D coverage</div>
+    <div class="info" id="coverage">90,261 Gaussian splats reconstructed from the videos. Selecting a route never removes wall geometry.</div>
+  </div>
+  <div class="hint">Drag = orbit · right-drag = pan · scroll = zoom. Coloured rings identify the reviewed hold positions.</div>
+</div>
+<div id="topbar"><a href="index.html">Mesh view</a><button type="button" id="btnMarks" class="on">Hold markers</button><button type="button" id="btnReset">Reset view</button></div>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/",
+  "@mkkellogg/gaussian-splats-3d": "https://unpkg.com/@mkkellogg/gaussian-splats-3d@0.4.7/build/gaussian-splats-3d.module.js"
+}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import * as GS from '@mkkellogg/gaussian-splats-3d';
+
+const loading=document.getElementById('loading'),pbar=document.getElementById('pbar');
+const routesEl=document.getElementById('routes'),flagEl=document.getElementById('flag');
+let renderer;
+try{renderer=new THREE.WebGLRenderer({antialias:false,powerPreference:'high-performance',alpha:false});}
+catch(error){loading.innerHTML='This device could not start the 3D renderer.<br><small>Please enable WebGL or try a current browser.</small>';throw error;}
+renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));renderer.setSize(innerWidth,innerHeight);renderer.setClearColor(0xffffff,1);
+document.getElementById('app').appendChild(renderer.domElement);
+const scene=new THREE.Scene();scene.background=new THREE.Color(0xffffff);
+const camera=new THREE.PerspectiveCamera(55,innerWidth/innerHeight,.05,500);
+const controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=.08;controls.enablePan=true;
+const viewer=new GS.DropInViewer({gpuAcceleratedSort:false,sharedMemoryForWorkers:false,progressiveLoad:false,enableOptionalEffects:true});
+scene.add(viewer);
+
+let manifest=null,routeData=null,activeColor=null,filterMode='isolate',renderMode='photo',marksOn=true,HOME=null;
+const routeScenes=new Map(),routeLoads=new Map(),markers=[];
+const routeId=id=>id==='pink'||id==='purple'?'pinkpurple':id;
+
+function setView(view){
+  camera.up.set(...view.up);camera.position.set(...view.pos);controls.target.set(...view.target);
+  const distance=camera.position.distanceTo(controls.target);camera.near=distance/200;camera.far=distance*25;camera.updateProjectionMatrix();
+  HOME={pos:camera.position.clone(),target:controls.target.clone(),up:camera.up.clone()};controls.update();
+}
+
+function ringTexture(){
+  const canvas=document.createElement('canvas');canvas.width=canvas.height=128;const context=canvas.getContext('2d');
+  context.strokeStyle='#fff';context.lineWidth=9;context.shadowColor='#000';context.shadowBlur=8;
+  context.beginPath();context.arc(64,64,43,0,Math.PI*2);context.stroke();
+  const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;return texture;
+}
+
+function addMarkers(){
+  const texture=ringTexture(),placed=[];
+  for(const route of routeData.routes){
+    const id=routeId(route.id),definition=manifest.routes.find(item=>item.id===id);if(!definition)continue;
+    for(const hold of route.holds){
+      if(placed.some(item=>item.id===id&&Math.hypot(item.x-hold.x,item.y-hold.y,item.z-hold.z)<.06))continue;
+      placed.push({id,x:hold.x,y:hold.y,z:hold.z});
+      const material=new THREE.SpriteMaterial({map:texture,color:new THREE.Color(definition.color),transparent:true,opacity:0,depthTest:false,depthWrite:false});
+      const marker=new THREE.Sprite(material);const size=Math.max(.18,(hold.s||.16)*1.3);marker.scale.set(size,size,size);marker.position.set(hold.x,hold.y,hold.z);
+      marker.renderOrder=5;marker.userData={routeId:id};viewer.add(marker);markers.push(marker);
+    }
+  }
+}
+
+function buildRoutes(){
+  routesEl.innerHTML='';
+  const all=document.createElement('div');all.className='rt'+(activeColor===null?' on':'');
+  all.innerHTML='<span class="sw" style="background:conic-gradient(#ffd20a,#36d126,#2486ff,#e33cc2,#ffd20a)"></span>All routes';
+  all.onclick=()=>selectRoute(null);routesEl.appendChild(all);
+  for(const route of manifest.routes){
+    const item=document.createElement('div');item.className='rt'+(activeColor===route.id?' on':'');
+    item.innerHTML=`<span class="sw" style="background:${route.color}"></span>${route.name}<span class="ct">${route.holds} holds</span>`;
+    item.onclick=()=>selectRoute(activeColor===route.id?null:route.id);routesEl.appendChild(item);
+  }
+  for(const route of [
+    {name:'Beige / Grey',color:'#c9b892',message:'Beige and neutral-grey holds need a reviewed 3D marker pass before they can be highlighted without colouring the wall.'},
+    {name:'Black',color:'#222428',message:'Black holds cannot be separated reliably from the black wall by colour. They need manual 3D markers.'},
+  ]){
+    const item=document.createElement('div');item.className='rt flag';item.innerHTML=`<span class="sw" style="background:${route.color}"></span>${route.name}`;
+    item.onclick=()=>showFlag(route.message);routesEl.appendChild(item);
+  }
+}
+
+function showFlag(message){flagEl.style.display='block';flagEl.textContent='⚑ '+message;}
+async function ensureRouteScene(id){
+  if(routeScenes.has(id))return routeScenes.get(id);
+  if(routeLoads.has(id))return routeLoads.get(id);
+  const definition=manifest.routes.find(route=>route.id===id);
+  if(!definition)throw new Error(`No overlay is available for ${id}.`);
+  showFlag(`Loading the ${definition.name} 3D overlay…`);
+  const promise=viewer.addSplatScene(definition.file,{splatAlphaRemovalThreshold:5,showLoadingUI:false,progressiveLoad:false})
+    .then(()=>{
+      const sceneIndex=viewer.getSceneCount()-1;routeScenes.set(id,sceneIndex);routeLoads.delete(id);
+      if(activeColor===id)flagEl.style.display='none';applyView();return sceneIndex;
+    }).catch(error=>{routeLoads.delete(id);throw error;});
+  routeLoads.set(id,promise);return promise;
+}
+
+async function selectRoute(id){
+  activeColor=id;flagEl.style.display='none';buildRoutes();applyView();
+  if(!id)return;
+  try{await ensureRouteScene(id);}catch(error){showFlag(`The ${id} overlay could not load. The complete photo scan remains available.`);console.error(error);}
+}
+
+async function loadAllRouteScenes(){
+  for(const route of manifest.routes){
+    try{await ensureRouteScene(route.id);}catch(error){console.error(error);}
+  }
+  if(activeColor===null)flagEl.style.display='none';applyView();
+}
+
+function applyView(){
+  if(!manifest)return;
+  const base=viewer.getSplatScene(0);
+  if(activeColor===null){
+    base.opacity=renderMode==='photo'?1:.82;
+    for(const [id,sceneIndex] of routeScenes){
+      const routeScene=viewer.getSplatScene(sceneIndex);routeScene.visible=renderMode==='routes';routeScene.opacity=.96;
+    }
+  }else{
+    base.opacity=filterMode==='isolate' ? .42 : .72;
+    for(const [id,sceneIndex] of routeScenes){
+      const routeScene=viewer.getSplatScene(sceneIndex);routeScene.visible=id===activeColor;routeScene.opacity=1;
+    }
+  }
+  for(const marker of markers){
+    const selected=marker.userData.routeId===activeColor;
+    marker.material.opacity=marksOn&&activeColor&&selected ? .95 : 0;
+  }
+}
+
+async function start(){
+  [manifest,routeData]=await Promise.all([
+    fetch('splat.manifest.json').then(response=>{if(!response.ok)throw new Error('The full-wall manifest is missing.');return response.json();}),
+    fetch('routes.json').then(response=>{if(!response.ok)throw new Error('The reviewed route markers are missing.');return response.json();}),
+  ]);
+  buildRoutes();
+  await viewer.addSplatScene(manifest.source,{
+    splatAlphaRemovalThreshold:5,showLoadingUI:false,progressiveLoad:false,
+    onProgress:progress=>{pbar.style.width=`${Math.min(100,progress||0)}%`;},
+  });
+  addMarkers();setView(manifest.view);applyView();
+  document.getElementById('coverage').textContent=`${manifest.sourceSplats.toLocaleString()} Gaussian splats from the complete video scan · ${manifest.routes.reduce((sum,route)=>sum+route.holds,0)} reviewed hold positions.`;
+  loading.style.display='none';
+}
+
+document.getElementById('mode').onclick=event=>{const button=event.target.closest('button');if(!button)return;renderMode=button.dataset.m;
+  document.querySelectorAll('#mode button').forEach(item=>item.classList.toggle('on',item===button));applyView();
+  if(renderMode==='routes'&&activeColor===null)void loadAllRouteScenes();};
+document.getElementById('fmode').onclick=event=>{const button=event.target.closest('button');if(!button)return;filterMode=button.dataset.f;
+  document.querySelectorAll('#fmode button').forEach(item=>item.classList.toggle('on',item===button));applyView();};
+document.getElementById('btnMarks').onclick=event=>{marksOn=!marksOn;event.currentTarget.classList.toggle('on',marksOn);applyView();};
+document.getElementById('btnReset').onclick=()=>{if(HOME){camera.position.copy(HOME.pos);controls.target.copy(HOME.target);camera.up.copy(HOME.up);controls.update();}};
+
+start().catch(error=>{console.error(error);loading.innerHTML='The complete wall scan could not be loaded.<br><small>'+String(error.message||error)+'</small>';});
+function animate(){requestAnimationFrame(animate);controls.update();renderer.render(scene,camera);}animate();
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
+</script>
+</body>
+</html>

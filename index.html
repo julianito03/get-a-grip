@@ -3,219 +3,293 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-<title>Get a Grip — Full 3D Wall</title>
+<title>Get a Grip — 3D Wall</title>
 <style>
-  :root{--bg:#fff;--panel:#fff;--panel2:#f3f5f7;--line:#e6e8ec;--ink:#14171c;--muted:#6b7280;--accent:#f2b705;
-    --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  :root{--bg:#ffffff;--panel:#ffffff;--panel2:#f3f5f7;--line:#e6e8ec;--ink:#14171c;--muted:#6b7280;--accent:#f2b705;
+    --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
   *{box-sizing:border-box}
   html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:var(--font);overflow:hidden}
-  #app{position:fixed;inset:0}canvas{display:block}
-  #ui{position:absolute;top:0;left:0;height:100%;width:310px;background:rgba(255,255,255,.95);border-right:1px solid var(--line);
-    display:flex;flex-direction:column;backdrop-filter:blur(8px);z-index:10}
+  #app{position:fixed;inset:0} canvas{display:block}
+  #ui{position:absolute;top:0;left:0;height:100%;width:300px;background:rgba(255,255,255,.94);
+    border-right:1px solid var(--line);display:flex;flex-direction:column;backdrop-filter:blur(8px);z-index:10}
   .brand{padding:18px 20px 13px;border-bottom:1px solid var(--line)}
   .brand h1{margin:0;font-size:18px;letter-spacing:.02em;font-weight:800;display:flex;align-items:center;gap:9px}
   .brand h1 .dot{width:11px;height:11px;border-radius:3px;background:var(--accent)}
   .brand p{margin:5px 0 0;font-size:11.5px;color:var(--muted)}
-  .model-badge{display:inline-flex;align-items:center;gap:6px;margin-top:8px;padding:4px 7px;border-radius:6px;
-    background:#eef8f0;color:#24723a;font-size:10px;font-weight:750;letter-spacing:.04em;text-transform:uppercase}
+  .model-badge{display:inline-flex;align-items:center;gap:6px;margin-top:8px;padding:4px 7px;border-radius:6px;background:#eef8f0;color:#24723a;font-size:10px;font-weight:750;letter-spacing:.04em;text-transform:uppercase}
   .model-badge::before{content:"";width:6px;height:6px;border-radius:50%;background:#35a853}
-  .scroll{flex:1;overflow-y:auto;padding-bottom:9px}
+  .scroll{flex:1;overflow-y:auto;padding-bottom:8px}
   .grp{padding:14px 18px 5px;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
   .routes{padding:2px 12px 4px}
   .rt{display:flex;align-items:center;gap:11px;padding:8px 12px;margin:3px 0;border-radius:9px;cursor:pointer;
     border:1px solid transparent;font-size:13.5px;font-weight:600;transition:.12s}
-  .rt:hover{background:var(--panel2)}.rt.on{background:#fff;border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
-  .rt.flag{opacity:.5;cursor:not-allowed}.rt.flag:hover{background:transparent}
+  .rt:hover{background:var(--panel2)} .rt.on{background:#fff;border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+  .rt.flag{opacity:.55}.rt.flag:hover{background:transparent;cursor:not-allowed}
   .rt .sw{width:17px;height:17px;border-radius:5px;flex:0 0 auto;box-shadow:0 0 0 2px rgba(0,0,0,.07)}
   .rt .ct{margin-left:auto;font-size:11px;color:var(--muted);font-weight:600}
   .seg{display:flex;gap:6px;padding:2px 16px}
   .seg button{flex:1;padding:8px 0;font-size:12px;font-weight:600;color:var(--muted);background:var(--panel2);
     border:1px solid var(--line);border-radius:9px;cursor:pointer;transition:.13s}
   .seg button.on{color:#111;background:#fff;border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
-  .info{margin:4px 16px 0;padding:10px 11px;border:1px solid var(--line);border-radius:9px;font-size:11.5px;line-height:1.45;color:var(--muted)}
-  .flagmsg{margin:6px 16px;padding:9px 11px;border-radius:8px;background:#fff6e0;border:1px solid #f0d98a;
-    font-size:11.5px;color:#7a5c00;line-height:1.45;display:none}
+  .sitem{display:flex;align-items:center;gap:10px;padding:8px 18px;margin:2px 8px;border-radius:9px;cursor:pointer;font-size:13px;font-weight:600}
+  .sitem:hover{background:var(--panel2)} .sitem.on{background:#fff8e6;box-shadow:0 0 0 1px var(--accent) inset}
+  .sitem .d{width:9px;height:9px;border-radius:3px;background:var(--accent);flex:0 0 auto}
+  .flagmsg{margin:6px 16px;padding:9px 11px;border-radius:8px;background:#fff6e0;border:1px solid #f0d98a;font-size:11.5px;color:#7a5c00;line-height:1.45;display:none}
   .hint{padding:11px 18px;border-top:1px solid var(--line);font-size:11px;color:var(--muted);line-height:1.5}
   #topbar{position:absolute;top:14px;right:14px;display:flex;gap:8px;z-index:10}
   #topbar button,#topbar a{padding:9px 13px;font-size:12.5px;font-weight:600;color:var(--ink);background:rgba(255,255,255,.94);
     border:1px solid var(--line);border-radius:9px;cursor:pointer;text-decoration:none;font-family:inherit}
-  #topbar button:hover,#topbar a:hover{border-color:#cfd4db}#topbar button.on{border-color:var(--accent)}
-  #loading{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--bg);
-    z-index:50;color:var(--muted);font-size:14px;text-align:center;line-height:1.6;padding:24px}
-  #loading .bar{width:220px;height:4px;background:#eceff2;border-radius:3px;margin-top:13px;overflow:hidden}
-  #loading .bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .2s}
-  @media(max-width:720px){#ui{width:100%;height:auto;max-height:48%;bottom:0;top:auto;border-right:none;border-top:1px solid var(--line)}
-    #topbar{top:8px;right:8px}#topbar a{display:none}}
+  #topbar button:hover,#topbar a:hover{border-color:#cfd4db}
+  #loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:var(--bg);z-index:50;color:var(--muted);font-size:14px;text-align:center;line-height:1.6;padding:24px}
+  @media(max-width:720px){#ui{width:100%;height:auto;max-height:46%;bottom:0;top:auto;border-right:none;border-top:1px solid var(--line)}}
 </style>
 </head>
 <body>
 <div id="app"></div>
-<div id="loading">Loading complete video scan…<div class="bar"><i id="pbar"></i></div></div>
+<div id="loading">Loading 3D wall…</div>
 <div id="ui">
-  <div class="brand"><h1><span class="dot"></span>GET A GRIP</h1><p>Complete boulder wall · photographic 3D viewer</p><span class="model-badge">Full video scan</span></div>
+  <div class="brand"><h1><span class="dot"></span>GET A GRIP</h1><p>Boulder wall · precise 3D route viewer</p><span class="model-badge">Route-aware geometry</span></div>
   <div class="scroll">
     <div class="grp">Routes</div>
     <div class="routes" id="routes"></div>
     <div class="flagmsg" id="flag"></div>
-    <div class="grp">Filter strength</div>
-    <div class="seg" id="fmode"><button type="button" data-f="isolate" class="on">Focus</button><button type="button" data-f="dim">Soft dim</button></div>
+    <div class="grp">Filter mode</div>
+    <div class="seg" id="fmode"><button type="button" data-f="isolate" class="on">Isolate</button><button type="button" data-f="dim">Dim others</button></div>
     <div class="grp">Render</div>
-    <div class="seg" id="mode"><button type="button" data-m="photo" class="on">Photo texture</button><button type="button" data-m="routes">Sharper routes</button></div>
-    <div class="grp">3D coverage</div>
-    <div class="info" id="coverage">90,261 Gaussian splats reconstructed from the videos. Selecting a route never removes wall geometry.</div>
+    <div class="seg" id="mode"><button type="button" data-m="routes" class="on">Route colours</button><button type="button" data-m="tex">Photo texture</button></div>
+    <div class="grp">Wall section</div>
+    <div id="sections"></div>
   </div>
-  <div class="hint">Drag = orbit · right-drag = pan · scroll = zoom. Coloured rings identify the reviewed hold positions.</div>
+  <div class="hint">Every filter uses the original photogrammetry triangles. Drag = orbit · right-drag = pan · scroll = zoom.</div>
 </div>
-<div id="topbar"><a href="mesh.html">Mesh detail</a><button type="button" id="btnMarks" class="on">Hold markers</button><button type="button" id="btnReset">Reset view</button></div>
+<div id="topbar"><a href="photo.html">Photographic view</a><button type="button" id="btnReset">Reset view</button></div>
 
 <script type="importmap">
 { "imports": {
   "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-  "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/",
-  "@mkkellogg/gaussian-splats-3d": "https://unpkg.com/@mkkellogg/gaussian-splats-3d@0.4.7/build/gaussian-splats-3d.module.js"
+  "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
 }}
 </script>
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import * as GS from '@mkkellogg/gaussian-splats-3d';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+const R=THREE, PI=Math.PI;
+const loading=document.getElementById('loading');
+const ROUTES=[
+  {id:'yellow',name:'Yellow',hex:0xf2c40c},{id:'green',name:'Green',hex:0x33c21f},
+  {id:'blue',name:'Blue',hex:0x2276e8},{id:'pinkpurple',name:'Pink / Purple',hex:0xd23fae},
+  {id:'beigegrey',name:'Beige / Grey',hex:0xc9b892},
+  {id:'black',name:'Black',hex:0x222428,flag:'Black and neutral-grey holds still require manual separation in Blender. The app will not invent their geometry.'},
+];
 
-const loading=document.getElementById('loading'),pbar=document.getElementById('pbar');
-const routesEl=document.getElementById('routes'),flagEl=document.getElementById('flag');
 let renderer;
-try{renderer=new THREE.WebGLRenderer({antialias:false,powerPreference:'high-performance',alpha:false});}
-catch(error){loading.innerHTML='This device could not start the 3D renderer.<br><small>Please enable WebGL or try a current browser.</small>';throw error;}
-renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));renderer.setSize(innerWidth,innerHeight);renderer.setClearColor(0xffffff,1);
+try{
+  renderer=new R.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
+}catch(error){
+  loading.innerHTML='This device could not start the 3D renderer.<br><small>Please enable WebGL or try a current browser.</small>';
+  throw error;
+}
+
+const scene=new R.Scene();scene.background=new R.Color(0xffffff);
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(innerWidth,innerHeight);
+renderer.shadowMap.enabled=true;renderer.shadowMap.type=R.PCFSoftShadowMap;
+renderer.toneMapping=R.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;
 document.getElementById('app').appendChild(renderer.domElement);
-const scene=new THREE.Scene();scene.background=new THREE.Color(0xffffff);
-const camera=new THREE.PerspectiveCamera(55,innerWidth/innerHeight,.05,500);
-const controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=.08;controls.enablePan=true;
-const viewer=new GS.DropInViewer({gpuAcceleratedSort:false,sharedMemoryForWorkers:false,progressiveLoad:false,enableOptionalEffects:true});
-scene.add(viewer);
+const pmrem=new R.PMREMGenerator(renderer);scene.environment=pmrem.fromScene(new RoomEnvironment(),0.03).texture;
 
-let manifest=null,routeData=null,activeColor=null,filterMode='isolate',renderMode='photo',marksOn=true,HOME=null;
-const routeScenes=new Map(),routeLoads=new Map(),markers=[];
-const routeId=id=>id==='pink'||id==='purple'?'pinkpurple':id;
+const camera=new R.PerspectiveCamera(42,innerWidth/innerHeight,0.01,1000);
+const controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=.08;
+controls.enablePan=true;controls.minDistance=.3;controls.maxPolarAngle=PI*.62;
 
-function setView(view){
-  camera.up.set(...view.up);camera.position.set(...view.pos);controls.target.set(...view.target);
-  const distance=camera.position.distanceTo(controls.target);camera.near=distance/200;camera.far=distance*25;camera.updateProjectionMatrix();
-  HOME={pos:camera.position.clone(),target:controls.target.clone(),up:camera.up.clone()};controls.update();
+scene.add(new R.HemisphereLight(0xffffff,0xdfe3ea,.85));
+const key=new R.DirectionalLight(0xffffff,2.3);key.position.set(-5,9,7);key.castShadow=true;
+key.shadow.mapSize.set(2048,2048);key.shadow.bias=-.0003;key.shadow.normalBias=.03;key.shadow.radius=7;
+key.shadow.camera.near=.1;key.shadow.camera.far=80;scene.add(key);
+const fill=new R.DirectionalLight(0xf2f6ff,1);fill.position.set(6,4,9);scene.add(fill);
+const rim=new R.DirectionalLight(0xffffff,.6);rim.position.set(7,5,-5);scene.add(rim);
+const ground=new R.Mesh(new R.PlaneGeometry(400,400),new R.ShadowMaterial({opacity:.18}));
+ground.rotation.x=-PI/2;ground.receiveShadow=true;scene.add(ground);
+
+const wallMat=new R.MeshStandardMaterial({color:0x17191d,roughness:.76,metalness:.02,envMapIntensity:.62});
+const dimMat=new R.MeshStandardMaterial({color:0x9298a1,roughness:.72,metalness:0,transparent:true,opacity:.24,depthWrite:true});
+const routeMats=new Map(ROUTES.map(route=>[route.id,new R.MeshStandardMaterial({color:route.hex,roughness:.48,metalness:.01})]));
+
+let HOME=null,activeColor=null,filterMode='isolate',curMode='routes',wallRoot=null,manifest=null;
+const structureMeshes=[],routeMeshes=new Map(ROUTES.map(route=>[route.id,[]]));
+const routesEl=document.getElementById('routes'),flagEl=document.getElementById('flag');
+
+function routeIdFor(object){
+  const explicit=object.userData?.routeColor;
+  if(explicit&&routeMeshes.has(explicit))return explicit;
+  const match=object.name?.toLowerCase().match(/^route_(yellow|green|blue|pinkpurple|beigegrey|black)$/);
+  return match?.[1]||null;
 }
 
-function ringTexture(){
-  const canvas=document.createElement('canvas');canvas.width=canvas.height=128;const context=canvas.getContext('2d');
-  context.strokeStyle='#fff';context.lineWidth=9;context.shadowColor='#000';context.shadowBlur=8;
-  context.beginPath();context.arc(64,64,43,0,Math.PI*2);context.stroke();
-  const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;return texture;
-}
-
-function addMarkers(){
-  const texture=ringTexture(),placed=[];
-  for(const route of routeData.routes){
-    const id=routeId(route.id),definition=manifest.routes.find(item=>item.id===id);if(!definition)continue;
-    for(const hold of route.holds){
-      if(placed.some(item=>item.id===id&&Math.hypot(item.x-hold.x,item.y-hold.y,item.z-hold.z)<.06))continue;
-      placed.push({id,x:hold.x,y:hold.y,z:hold.z});
-      const material=new THREE.SpriteMaterial({map:texture,color:new THREE.Color(definition.color),transparent:true,opacity:0,depthTest:false,depthWrite:false});
-      const marker=new THREE.Sprite(material);const size=Math.max(.18,(hold.s||.16)*1.3);marker.scale.set(size,size,size);marker.position.set(hold.x,hold.y,hold.z);
-      marker.renderOrder=5;marker.userData={routeId:id};viewer.add(marker);markers.push(marker);
-    }
-  }
-}
-
-function buildRoutes(){
+function buildRouteUI(){
   routesEl.innerHTML='';
   const all=document.createElement('div');all.className='rt'+(activeColor===null?' on':'');
-  all.innerHTML='<span class="sw" style="background:conic-gradient(#ffd20a,#36d126,#2486ff,#e33cc2,#ffd20a)"></span>All routes';
-  all.onclick=()=>selectRoute(null);routesEl.appendChild(all);
-  for(const route of manifest.routes){
-    const item=document.createElement('div');item.className='rt'+(activeColor===route.id?' on':'');
-    item.innerHTML=`<span class="sw" style="background:${route.color}"></span>${route.name}<span class="ct">${route.holds} holds</span>`;
-    item.onclick=()=>selectRoute(activeColor===route.id?null:route.id);routesEl.appendChild(item);
-  }
-  for(const route of [
-    {name:'Beige / Grey',color:'#c9b892',message:'Beige and neutral-grey holds need a reviewed 3D marker pass before they can be highlighted without colouring the wall.'},
-    {name:'Black',color:'#222428',message:'Black holds cannot be separated reliably from the black wall by colour. They need manual 3D markers.'},
-  ]){
-    const item=document.createElement('div');item.className='rt flag';item.innerHTML=`<span class="sw" style="background:${route.color}"></span>${route.name}`;
-    item.onclick=()=>showFlag(route.message);routesEl.appendChild(item);
-  }
+  all.innerHTML='<span class="sw" style="background:conic-gradient(#f2c40c,#33c21f,#2276e8,#d23fae,#c9b892,#f2c40c)"></span>All routes';
+  all.onclick=()=>pick(null);routesEl.appendChild(all);
+  ROUTES.forEach(route=>{
+    const available=(routeMeshes.get(route.id)?.length||0)>0;
+    const el=document.createElement('div');
+    el.className='rt'+(activeColor===route.id?' on':'')+(!available?' flag':'');
+    const triangles=manifest?.routes?.find(item=>item.id===route.id)?.triangles;
+    const count=triangles?`${Math.round(triangles/100)/10}k`:(available?'3D':'');
+    el.innerHTML=`<span class="sw" style="background:#${route.hex.toString(16).padStart(6,'0')}"></span>${route.name}<span class="ct">${count}</span>`;
+    if(available)el.onclick=()=>pick(activeColor===route.id?null:route.id);
+    else el.onclick=()=>showFlag(route.flag||`${route.name} has not been separated in the current model.`);
+    routesEl.appendChild(el);
+  });
 }
 
 function showFlag(message){flagEl.style.display='block';flagEl.textContent='⚑ '+message;}
-async function ensureRouteScene(id){
-  if(routeScenes.has(id))return routeScenes.get(id);
-  if(routeLoads.has(id))return routeLoads.get(id);
-  const definition=manifest.routes.find(route=>route.id===id);
-  if(!definition)throw new Error(`No overlay is available for ${id}.`);
-  showFlag(`Loading the ${definition.name} 3D overlay…`);
-  const promise=viewer.addSplatScene(definition.file,{splatAlphaRemovalThreshold:5,showLoadingUI:false,progressiveLoad:false})
-    .then(()=>{
-      const sceneIndex=viewer.getSceneCount()-1;routeScenes.set(id,sceneIndex);routeLoads.delete(id);
-      if(activeColor===id)flagEl.style.display='none';applyView();return sceneIndex;
-    }).catch(error=>{routeLoads.delete(id);throw error;});
-  routeLoads.set(id,promise);return promise;
-}
+function pick(id){activeColor=id;flagEl.style.display='none';buildRouteUI();applyMaterials();}
 
-async function selectRoute(id){
-  activeColor=id;flagEl.style.display='none';buildRoutes();applyView();
-  if(!id)return;
-  try{await ensureRouteScene(id);}catch(error){showFlag(`The ${id} overlay could not load. The complete photo scan remains available.`);console.error(error);}
-}
-
-async function loadAllRouteScenes(){
-  for(const route of manifest.routes){
-    try{await ensureRouteScene(route.id);}catch(error){console.error(error);}
-  }
-  if(activeColor===null)flagEl.style.display='none';applyView();
-}
-
-function applyView(){
-  if(!manifest)return;
-  const base=viewer.getSplatScene(0);
-  if(activeColor===null){
-    base.opacity=renderMode==='photo'?1:.82;
-    for(const [id,sceneIndex] of routeScenes){
-      const routeScene=viewer.getSplatScene(sceneIndex);routeScene.visible=renderMode==='routes';routeScene.opacity=.96;
-    }
-  }else{
-    base.opacity=filterMode==='isolate' ? .42 : .72;
-    for(const [id,sceneIndex] of routeScenes){
-      const routeScene=viewer.getSplatScene(sceneIndex);routeScene.visible=id===activeColor;routeScene.opacity=1;
-    }
-  }
-  for(const marker of markers){
-    const selected=marker.userData.routeId===activeColor;
-    marker.material.opacity=marksOn&&activeColor&&selected ? .95 : 0;
-  }
-}
-
-async function start(){
-  [manifest,routeData]=await Promise.all([
-    fetch('splat.manifest.json').then(response=>{if(!response.ok)throw new Error('The full-wall manifest is missing.');return response.json();}),
-    fetch('routes.json').then(response=>{if(!response.ok)throw new Error('The reviewed route markers are missing.');return response.json();}),
-  ]);
-  buildRoutes();
-  await viewer.addSplatScene(manifest.source,{
-    splatAlphaRemovalThreshold:5,showLoadingUI:false,progressiveLoad:false,
-    onProgress:progress=>{pbar.style.width=`${Math.min(100,progress||0)}%`;},
+function applyMaterials(){
+  structureMeshes.forEach(entry=>{
+    entry.mesh.visible=true;
+    entry.mesh.material=curMode==='routes'?wallMat:entry.material;
   });
-  addMarkers();setView(manifest.view);applyView();
-  document.getElementById('coverage').textContent=`${manifest.sourceSplats.toLocaleString()} Gaussian splats from the complete video scan · ${manifest.routes.reduce((sum,route)=>sum+route.holds,0)} reviewed hold positions.`;
-  loading.style.display='none';
+  for(const [routeId,entries] of routeMeshes){
+    entries.forEach(entry=>{
+      entry.mesh.visible=true;
+      if(activeColor===null){
+        entry.mesh.material=curMode==='routes'?routeMats.get(routeId):entry.material;
+      }else if(routeId===activeColor){
+        entry.mesh.material=curMode==='routes'?routeMats.get(routeId):entry.material;
+      }else{
+        entry.mesh.visible=true;
+        entry.mesh.material=filterMode==='dim'?dimMat:wallMat;
+      }
+    });
+  }
 }
 
-document.getElementById('mode').onclick=event=>{const button=event.target.closest('button');if(!button)return;renderMode=button.dataset.m;
-  document.querySelectorAll('#mode button').forEach(item=>item.classList.toggle('on',item===button));applyView();
-  if(renderMode==='routes'&&activeColor===null)void loadAllRouteScenes();};
-document.getElementById('fmode').onclick=event=>{const button=event.target.closest('button');if(!button)return;filterMode=button.dataset.f;
-  document.querySelectorAll('#fmode button').forEach(item=>item.classList.toggle('on',item===button));applyView();};
-document.getElementById('btnMarks').onclick=event=>{marksOn=!marksOn;event.currentTarget.classList.toggle('on',marksOn);applyView();};
-document.getElementById('btnReset').onclick=()=>{if(HOME){camera.position.copy(HOME.pos);controls.target.copy(HOME.target);camera.up.copy(HOME.up);controls.update();}};
+async function readFaceMap(definition){
+  if(!definition?.file)throw new Error('The semantic face-map definition is missing.');
+  const response=await fetch(definition.file);
+  if(!response.ok)throw new Error(`Could not load ${definition.file} (${response.status}).`);
+  let bytes=await response.arrayBuffer();
+  if(definition.encoding==='gzip-uint8'){
+    if(!globalThis.DecompressionStream)throw new Error('This browser cannot decompress the route map. Please use a current browser.');
+    const stream=new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
+    bytes=await new Response(stream).arrayBuffer();
+  }
+  const labels=new Uint8Array(bytes);
+  if(definition.triangles&&labels.length!==definition.triangles){
+    throw new Error(`Route map has ${labels.length} triangles; expected ${definition.triangles}.`);
+  }
+  return labels;
+}
 
-start().catch(error=>{console.error(error);loading.innerHTML='The complete wall scan could not be loaded.<br><small>'+String(error.message||error)+'</small>';});
-function animate(){requestAnimationFrame(animate);controls.update();renderer.render(scene,camera);}animate();
+function splitSourceMesh(root,faceLabels,labelNames){
+  const candidates=[];
+  root.traverse(object=>{if(object.isMesh&&object.geometry?.index)candidates.push(object);});
+  const source=candidates.find(object=>object.geometry.index.count/3===faceLabels.length);
+  if(!source)throw new Error('No source mesh matches the semantic route map.');
+
+  const geometry=source.geometry,index=geometry.index.array;
+  const buckets=labelNames.map(()=>[]);
+  for(let face=0;face<faceLabels.length;face+=1){
+    const bucket=buckets[faceLabels[face]];
+    if(!bucket)continue;
+    const offset=face*3;bucket.push(index[offset],index[offset+1],index[offset+2]);
+  }
+
+  const semanticRoot=new R.Group();semanticRoot.name='wall_semantic_root';
+  semanticRoot.position.copy(source.position);semanticRoot.quaternion.copy(source.quaternion);semanticRoot.scale.copy(source.scale);
+  semanticRoot.userData={kind:'semantic-root',semanticVersion:1};
+  const vertexCount=geometry.getAttribute('position').count;
+  buckets.forEach((values,labelIndex)=>{
+    if(!values.length)return;
+    const id=labelNames[labelIndex];
+    const layerGeometry=new R.BufferGeometry();
+    for(const [name,attribute] of Object.entries(geometry.attributes))layerGeometry.setAttribute(name,attribute);
+    for(const [name,attributes] of Object.entries(geometry.morphAttributes||{}))layerGeometry.morphAttributes[name]=attributes;
+    const IndexArray=vertexCount>65535?Uint32Array:Uint16Array;
+    layerGeometry.setIndex(new R.BufferAttribute(new IndexArray(values),1));
+    layerGeometry.computeBoundingBox();layerGeometry.computeBoundingSphere();
+    const material=Array.isArray(source.material)?source.material[0]:source.material;
+    const layer=new R.Mesh(layerGeometry,material);layer.name=id==='structure'?'wall_structure':`route_${id}`;
+    layer.userData={kind:id==='structure'?'structure':'route',routeColor:id==='structure'?null:id,semanticVersion:1};
+    layer.castShadow=true;layer.receiveShadow=true;semanticRoot.add(layer);
+  });
+  source.parent.add(semanticRoot);source.parent.remove(source);
+  return semanticRoot;
+}
+
+function registerModel(root){
+  root.traverse(object=>{
+    if(!object.isMesh)return;
+    object.castShadow=true;object.receiveShadow=true;
+    const material=object.material;
+    if(material){material.roughness=Math.min(1,material.roughness??.8);material.needsUpdate=true;}
+    const routeId=routeIdFor(object);
+    const entry={mesh:object,material,routeId};
+    if(routeId)routeMeshes.get(routeId).push(entry);else structureMeshes.push(entry);
+  });
+  const available=[...routeMeshes.values()].reduce((sum,entries)=>sum+entries.length,0);
+  if(!available)throw new Error('The model loaded, but it contains no semantic route objects.');
+}
+
+function fitModel(){
+  const box=new R.Box3().setFromObject(wallRoot),size=box.getSize(new R.Vector3());
+  wallRoot.scale.setScalar(7/size.y);
+  box.setFromObject(wallRoot);const centre=box.getCenter(new R.Vector3()),min=box.min;
+  wallRoot.position.sub(new R.Vector3(centre.x,min.y,centre.z));
+  box.setFromObject(wallRoot);const ctr=box.getCenter(new R.Vector3()),sz=box.getSize(new R.Vector3()),radius=Math.max(sz.x,sz.y);
+  key.target.position.copy(ctr);scene.add(key.target);
+  HOME={pos:new R.Vector3(ctr.x,ctr.y+sz.y*.08,ctr.z+radius*1.65),tgt:ctr.clone()};
+  camera.position.copy(HOME.pos);controls.target.copy(HOME.tgt);camera.near=radius/300;camera.far=radius*40;camera.updateProjectionMatrix();
+}
+
+async function loadModel(){
+  manifest=await fetch('model.manifest.json').then(response=>{
+    if(!response.ok)throw new Error(`Could not load the model manifest (${response.status}).`);
+    return response.json();
+  });
+  loading.textContent='Loading route geometry…';
+  const faceLabels=await readFaceMap(manifest.faceMap);
+  const modelFile=manifest.source||'wall_fused.glb';
+  return new Promise((resolve,reject)=>new GLTFLoader().load(modelFile,gltf=>{
+    try{
+      wallRoot=gltf.scene;splitSourceMesh(wallRoot,faceLabels,manifest.faceMap.labels);registerModel(wallRoot);scene.add(wallRoot);fitModel();applyMaterials();buildRouteUI();
+      const layerCount=structureMeshes.length+[...routeMeshes.values()].filter(entries=>entries.length).length;
+      const section=document.getElementById('sections');
+      const triangleCount=manifest.faceMap.triangles.toLocaleString();
+      section.innerHTML=`<div class="sitem on"><span class="d"></span><div>Whole wall<small>${triangleCount} exact triangles · ${layerCount} layers</small></div></div>`;
+      loading.style.display='none';resolve();
+    }catch(error){reject(error);}
+  },progress=>{
+    if(progress.total)loading.textContent=`Loading 3D wall… ${Math.round(progress.loaded/progress.total*100)}%`;
+  },reject));
+}
+
+const ray=new R.Raycaster(),mouse=new R.Vector2();let downXY=null;
+renderer.domElement.addEventListener('pointerdown',event=>downXY=[event.clientX,event.clientY]);
+renderer.domElement.addEventListener('pointerup',event=>{
+  if(!downXY||Math.hypot(event.clientX-downXY[0],event.clientY-downXY[1])>6)return;
+  mouse.x=event.clientX/innerWidth*2-1;mouse.y=-(event.clientY/innerHeight)*2+1;ray.setFromCamera(mouse,camera);
+  const candidates=[...routeMeshes.values()].flat().map(entry=>entry.mesh);
+  const hit=ray.intersectObjects(candidates,false)[0];const routeId=hit&&routeIdFor(hit.object);
+  if(routeId)pick(routeId);
+});
+
+document.getElementById('mode').onclick=event=>{const button=event.target.closest('button');if(!button)return;curMode=button.dataset.m;
+  document.querySelectorAll('#mode button').forEach(item=>item.classList.toggle('on',item===button));applyMaterials();};
+document.getElementById('fmode').onclick=event=>{const button=event.target.closest('button');if(!button)return;filterMode=button.dataset.f;
+  document.querySelectorAll('#fmode button').forEach(item=>item.classList.toggle('on',item===button));applyMaterials();};
+document.getElementById('btnReset').onclick=()=>{if(HOME){camera.position.copy(HOME.pos);controls.target.copy(HOME.tgt);controls.update();}};
+
+buildRouteUI();
+loadModel().catch(error=>{
+  console.error(error);
+  loading.innerHTML='The semantic wall could not be loaded.<br><small>'+String(error.message||error)+'</small>';
+});
+function loop(){requestAnimationFrame(loop);controls.update();renderer.render(scene,camera);}loop();
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
 </script>
 </body>
