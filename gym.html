@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Get a Grip — Gym Wall 3D</title>
+<style>
+  :root{--bg:#ffffff;--panel2:#f3f5f7;--line:#e6e8ec;--ink:#14171c;--muted:#6b7280;--accent:#f2b705;
+    --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:var(--font);overflow:hidden}
+  #app{position:fixed;inset:0} canvas{display:block}
+  #ui{position:absolute;top:0;left:0;height:100%;width:300px;background:rgba(255,255,255,.94);
+    border-right:1px solid var(--line);display:flex;flex-direction:column;backdrop-filter:blur(8px);z-index:10}
+  .brand{padding:18px 20px 13px;border-bottom:1px solid var(--line)}
+  .brand h1{margin:0;font-size:18px;letter-spacing:.02em;font-weight:800;display:flex;align-items:center;gap:9px}
+  .brand h1 .dot{width:11px;height:11px;border-radius:3px;background:var(--accent)}
+  .brand p{margin:5px 0 0;font-size:11.5px;color:var(--muted)}
+  .model-badge{display:inline-flex;align-items:center;gap:6px;margin-top:8px;padding:4px 7px;border-radius:6px;background:#eef8f0;color:#24723a;font-size:10px;font-weight:750;letter-spacing:.04em;text-transform:uppercase}
+  .model-badge::before{content:"";width:6px;height:6px;border-radius:50%;background:#35a853}
+  .scroll{flex:1;overflow-y:auto;padding-bottom:8px}
+  .grp{padding:14px 18px 5px;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  .routes{padding:2px 12px 4px}
+  .rt{display:flex;align-items:center;gap:11px;padding:8px 12px;margin:3px 0;border-radius:9px;cursor:pointer;
+    border:1px solid transparent;font-size:13.5px;font-weight:600;transition:.12s}
+  .rt:hover{background:var(--panel2)} .rt.on{background:#fff;border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+  .rt .sw{width:17px;height:17px;border-radius:5px;flex:0 0 auto;box-shadow:0 0 0 2px rgba(0,0,0,.07)}
+  .rt .ct{margin-left:auto;font-size:11px;color:var(--muted);font-weight:600}
+  .seg{display:flex;gap:6px;padding:2px 16px}
+  .seg button{flex:1;padding:8px 0;font-size:12px;font-weight:600;color:var(--muted);background:var(--panel2);
+    border:1px solid var(--line);border-radius:9px;cursor:pointer;transition:.13s}
+  .seg button.on{color:#111;background:#fff;border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+  .hint{padding:11px 18px;border-top:1px solid var(--line);font-size:11px;color:var(--muted);line-height:1.5}
+  #topbar{position:absolute;top:14px;right:14px;display:flex;gap:8px;z-index:10}
+  #topbar button,#topbar a{padding:9px 13px;font-size:12.5px;font-weight:600;color:var(--ink);background:rgba(255,255,255,.94);
+    border:1px solid var(--line);border-radius:9px;cursor:pointer;text-decoration:none;font-family:inherit}
+  #topbar button:hover,#topbar a:hover{border-color:#cfd4db}
+  #loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:var(--bg);z-index:50;color:var(--muted);font-size:14px;text-align:center;line-height:1.6;padding:24px}
+  @media(max-width:720px){#ui{width:100%;height:auto;max-height:46%;bottom:0;top:auto;border-right:none;border-top:1px solid var(--line)}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="loading">Loading gym wall…</div>
+<div id="ui">
+  <div class="brand"><h1><span class="dot"></span>GET A GRIP</h1><p>Gym wall · parametric 3D from one photo</p><span class="model-badge">Blender-built geometry</span></div>
+  <div class="scroll">
+    <div class="grp">Routes</div>
+    <div class="routes" id="routes"></div>
+    <div class="grp">Filter mode</div>
+    <div class="seg" id="fmode"><button type="button" data-f="isolate" class="on">Isolate</button><button type="button" data-f="dim">Dim others</button></div>
+  </div>
+  <div class="hint">Traced hold-by-hold from the photo, built parametrically in Blender. Drag = orbit · right-drag = pan · scroll = zoom.</div>
+</div>
+<div id="topbar"><a href="index.html">Main wall</a><button type="button" id="btnReset">Reset view</button></div>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+const loading = document.getElementById('loading');
+window.onerror = (m) => { loading.textContent = 'Fehler: ' + m; document.title = 'ERR ' + m; };
+
+const ROUTES = [
+  { key:'gruen',  label:'Grün',    sw:'#3E9B48' },
+  { key:'blau',   label:'Blau',    sw:'#2A6FD4' },
+  { key:'gelb',   label:'Gelb',    sw:'#F5C921' },
+  { key:'schwarz',label:'Schwarz', sw:'#1A1B1D' },
+  { key:'grau',   label:'Grau',    sw:'#83898E' },
+  { key:'weiss',  label:'Weiß',    sw:'#EFEFEA' },
+];
+
+const renderer = new THREE.WebGLRenderer({ antialias:true, preserveDrawingBuffer:true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+document.getElementById('app').appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xf2f3f5);
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(renderer), 0.04).texture;
+
+const camera = new THREE.PerspectiveCamera(45, innerWidth/innerHeight, 0.05, 100);
+const controls = new OrbitControls(camera, renderer.domElement);
+const HOME = { pos:new THREE.Vector3(-2.4, 2.4, 7.4), tgt:new THREE.Vector3(0, 2.0, 0) };
+function home(){ camera.position.copy(HOME.pos); controls.target.copy(HOME.tgt); controls.update(); }
+document.getElementById('btnReset').onclick = home;
+
+const key = new THREE.DirectionalLight(0xffffff, 2.6);
+key.position.set(-4, 7, 8); key.castShadow = true;
+key.shadow.mapSize.set(2048, 2048);
+const d = 6; Object.assign(key.shadow.camera, { left:-d, right:d, top:d, bottom:-d });
+scene.add(key);
+const fill = new THREE.DirectionalLight(0xdde6ff, 0.8);
+fill.position.set(5, 3, 6);
+scene.add(fill);
+scene.add(new THREE.AmbientLight(0xffffff, 0.25));
+
+const ground = new THREE.Mesh(
+  new THREE.CircleGeometry(14, 48),
+  new THREE.MeshStandardMaterial({ color:0xc7a06a, roughness:0.9 }));
+ground.rotation.x = -Math.PI/2; ground.receiveShadow = true;
+scene.add(ground);
+
+const groups = {};   // routeColor -> meshes
+let structure = [];
+new GLTFLoader().load('gym_wall.glb', (g) => {
+  g.scene.traverse(o => {
+    if (!o.isMesh) return;
+    o.castShadow = o.receiveShadow = true;
+    const rc = o.userData.routeColor;
+    if (o.userData.kind === 'route' && rc) (groups[rc] = groups[rc] || []).push(o);
+    else structure.push(o);
+    if (o.material) { o.material = o.material.clone(); o.material.envMapIntensity = 0.5; }
+  });
+  scene.add(g.scene);
+  buildUI(); home(); loading.style.display = 'none';
+  renderer.render(scene, camera);
+  document.title = 'READY ' + Object.values(groups).reduce((n, a) => n + a.length, 0) + ' holds';
+}, undefined, (e) => { loading.textContent = 'GLB-Fehler: ' + e; document.title = 'ERR glb'; });
+
+let active = null, fmode = 'isolate';
+function apply(){
+  const dimOp = fmode === 'isolate' ? 0.06 : 0.22;
+  for (const rc in groups) for (const m of groups[rc]) {
+    const on = !active || rc === active;
+    m.material.transparent = !on; m.material.opacity = on ? 1 : dimOp;
+    m.material.emissive = new THREE.Color(on && active ? 0x222222 : 0x000000);
+  }
+  for (const m of structure) {
+    m.material.transparent = !!active && fmode === 'isolate';
+    m.material.opacity = active && fmode === 'isolate' ? 0.35 : 1;
+  }
+  document.querySelectorAll('.rt').forEach(el =>
+    el.classList.toggle('on', el.dataset.k === (active || 'alle')));
+}
+function buildUI(){
+  const box = document.getElementById('routes');
+  const mk = (k, label, sw, count) => {
+    const el = document.createElement('div');
+    el.className = 'rt'; el.dataset.k = k;
+    el.innerHTML = `<span class="sw" style="background:${sw}"></span>${label}<span class="ct">${count}</span>`;
+    el.onclick = () => { active = (k === 'alle') ? null : (active === k ? null : k); apply(); };
+    box.appendChild(el);
+  };
+  const total = Object.values(groups).reduce((n, a) => n + a.length, 0);
+  mk('alle', 'Alle Routen', 'conic-gradient(#F5C921 0 25%,#3E9B48 0 50%,#2A6FD4 0 75%,#1A1B1D 0)', total);
+  for (const r of ROUTES) if (groups[r.key]) mk(r.key, r.label, r.sw, groups[r.key].length);
+  document.querySelectorAll('#fmode button').forEach(b => b.onclick = () => {
+    fmode = b.dataset.f;
+    document.querySelectorAll('#fmode button').forEach(x => x.classList.toggle('on', x === b));
+    apply();
+  });
+  apply();
+}
+
+addEventListener('resize', () => {
+  camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+renderer.setAnimationLoop(() => { controls.update(); renderer.render(scene, camera); });
+</script>
+</body>
+</html>
